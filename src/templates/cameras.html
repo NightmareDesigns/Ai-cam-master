@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Cameras — AI-Cam{% endblock %}
+
+{% block topbar %}
+<div class="topbar">
+  <span class="topbar-title">Camera Management</span>
+  <div class="topbar-right">
+    <button id="btn-add-camera" class="btn btn-primary btn-sm">+ Add Camera</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Source</th>
+          <th>AI Detection</th>
+          <th>Motion</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="cameras-tbody">
+        <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add/Edit Camera Modal -->
+<div class="modal-backdrop" id="camera-modal">
+  <div class="modal">
+    <h2 id="modal-title">Add Camera</h2>
+    <input type="hidden" id="cam-id"/>
+
+    <div class="form-group">
+      <label>Name *</label>
+      <input type="text" id="cam-name" placeholder="Front Door"/>
+    </div>
+    <div class="form-group">
+      <label>Source * (RTSP URL, HTTP URL, or USB index e.g. <code>0</code>)</label>
+      <input type="text" id="cam-source" placeholder="rtsp://user:pass@192.168.1.10:554/stream1"/>
+    </div>
+    <div class="form-group">
+      <label>Location / Description</label>
+      <input type="text" id="cam-location" placeholder="Building A, Entrance"/>
+    </div>
+
+    <div class="form-group">
+      <div class="toggle">
+        <input type="checkbox" id="cam-detect-objects" checked/>
+        <label for="cam-detect-objects">AI Object Detection (YOLOv8)</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="toggle">
+        <input type="checkbox" id="cam-detect-motion" checked/>
+        <label for="cam-detect-motion">Motion Detection</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="toggle">
+        <input type="checkbox" id="cam-record" checked/>
+        <label for="cam-record">Save snapshot on event</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="toggle">
+        <input type="checkbox" id="cam-enabled" checked/>
+        <label for="cam-enabled">Enabled</label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button id="btn-cancel" class="btn btn-ghost">Cancel</button>
+      <button id="btn-save" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/cameras.js"></script>
+{% endblock %}

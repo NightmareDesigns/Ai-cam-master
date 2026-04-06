@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}AI-Cam{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"/>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎯</div>
+    <div>
+      <h1>AI-Cam</h1>
+      <span>Security Monitor</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="/"><span class="nav-icon">🏠</span><span>Dashboard</span></a>
+    <a href="/cameras"><span class="nav-icon">📷</span><span>Cameras</span></a>
+    <a href="/events"><span class="nav-icon">🔔</span><span>Events</span></a>
+    <a href="/settings"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+    <a href="/docs" target="_blank"><span class="nav-icon">📄</span><span>API Docs</span></a>
+  </nav>
+</aside>
+
+<!-- ── Main ─────────────────────────────────────────────────────────── -->
+<main class="main">
+  {% block topbar %}{% endblock %}
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<div id="toast-container"></div>
+<script src="/static/js/app.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
