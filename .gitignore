@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific
+recordings/
+snapshots/
+*.db
+*.sqlite
+*.sqlite3
+logs/
+.env
+
+# Model weights (download at runtime)
+*.pt
+*.onnx
+*.tflite
+yolov8*.pt
+
+# Node (if any frontend tooling)
+node_modules/

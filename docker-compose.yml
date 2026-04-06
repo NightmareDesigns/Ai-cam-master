@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  aicam:
+    build: .
+    container_name: aicam
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./recordings:/app/recordings
+      - ./snapshots:/app/snapshots
+      - ./aicam.db:/app/aicam.db
+    env_file:
+      - .env
+    # Pass through USB cameras (adjust device paths as needed)
+    # devices:
+    #   - /dev/video0:/dev/video0
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000

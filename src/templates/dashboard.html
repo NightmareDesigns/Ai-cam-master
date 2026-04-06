@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — AI-Cam{% endblock %}
+
+{% block topbar %}
+<div class="topbar">
+  <span class="topbar-title">Dashboard</span>
+  <div class="topbar-right">
+    <span id="clock" style="color:var(--text-muted);font-size:.85rem"></span>
+    <a href="/cameras" class="btn btn-primary btn-sm">+ Add Camera</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats row -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-label">Total Cameras</span>
+    <span class="stat-value" id="stat-cameras">—</span>
+    <span class="stat-sub">configured</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Online</span>
+    <span class="stat-value" id="stat-online" style="color:var(--success)">—</span>
+    <span class="stat-sub">streaming now</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Events Today</span>
+    <span class="stat-value" id="stat-events">—</span>
+    <span class="stat-sub">detections &amp; alerts</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Persons Detected</span>
+    <span class="stat-value" id="stat-persons" style="color:var(--accent)">—</span>
+    <span class="stat-sub">all time</span>
+  </div>
+</div>
+
+<!-- Camera grid -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header">
+    <h2>Live Cameras</h2>
+    <a href="/cameras" class="btn btn-ghost btn-sm">Manage →</a>
+  </div>
+  <div class="camera-grid" id="camera-grid">
+    <div style="padding:40px;text-align:center;color:var(--text-muted)">Loading…</div>
+  </div>
+</div>
+
+<!-- Recent events -->
+<div class="card">
+  <div class="card-header">
+    <h2>Recent Events</h2>
+    <a href="/events" class="btn btn-ghost btn-sm">See all →</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Snapshot</th>
+          <th>Camera</th>
+          <th>Type</th>
+          <th>Confidence</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody id="event-tbody">
+        <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
+<script>
+  // Live clock
+  setInterval(() => {
+    const el = document.getElementById('clock');
+    if (el) el.textContent = new Date().toLocaleTimeString();
+  }, 1000);
+</script>
+{% endblock %}

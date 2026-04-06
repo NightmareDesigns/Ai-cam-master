@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — AI-Cam{% endblock %}
+
+{% block topbar %}
+<div class="topbar">
+  <span class="topbar-title">Settings &amp; Alert Rules</span>
+  <div class="topbar-right">
+    <button id="btn-add-rule" class="btn btn-primary btn-sm">+ Add Alert Rule</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Alert rules -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header">
+    <h2>Alert Rules</h2>
+  </div>
+  <p style="color:var(--text-muted);font-size:.875rem;margin-bottom:16px">
+    Rules are evaluated for every detection event. Use <code>*</code> as trigger class to match any detection.
+    Notifications can be sent via <code>console</code>, <code>email</code>, and/or <code>webhook</code> (comma-separated).
+  </p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Camera</th>
+          <th>Trigger Class</th>
+          <th>Notify Via</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="rules-tbody">
+        <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Quick info card -->
+<div class="card">
+  <div class="card-header"><h2>System Info</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;font-size:.875rem">
+    <div>
+      <div style="color:var(--text-muted);margin-bottom:4px">API Documentation</div>
+      <a href="/docs" target="_blank" class="btn btn-ghost btn-sm">Open Swagger UI →</a>
+    </div>
+    <div>
+      <div style="color:var(--text-muted);margin-bottom:4px">Supported Sources</div>
+      <div>RTSP streams, USB webcams (<code>0</code>, <code>1</code>…), HTTP MJPEG</div>
+    </div>
+    <div>
+      <div style="color:var(--text-muted);margin-bottom:4px">AI Model</div>
+      <div>YOLOv8 (auto-downloaded on first run)</div>
+    </div>
+    <div>
+      <div style="color:var(--text-muted);margin-bottom:4px">License</div>
+      <div>MIT — Private use &amp; Shareware</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Rule Modal -->
+<div class="modal-backdrop" id="rule-modal">
+  <div class="modal">
+    <h2 id="modal-title">Add Alert Rule</h2>
+    <input type="hidden" id="rule-id"/>
+
+    <div class="form-group">
+      <label>Rule Name *</label>
+      <input type="text" id="rule-name" placeholder="Person detected at front door"/>
+    </div>
+    <div class="form-group">
+      <label>Apply to Camera (leave blank for all cameras)</label>
+      <select id="rule-camera"><option value="">All cameras</option></select>
+    </div>
+    <div class="form-group">
+      <label>Trigger Class (<code>*</code> = any, or e.g. <code>person</code>, <code>car</code>, <code>motion</code>)</label>
+      <input type="text" id="rule-trigger" value="*"/>
+    </div>
+    <div class="form-group">
+      <label>Notify Via (comma-separated: <code>console</code>, <code>email</code>, <code>webhook</code>)</label>
+      <input type="text" id="rule-notify" value="console"/>
+    </div>
+    <div class="form-group">
+      <label>Webhook URL (optional)</label>
+      <input type="url" id="rule-webhook" placeholder="https://hooks.example.com/notify"/>
+    </div>
+    <div class="form-group">
+      <div class="toggle">
+        <input type="checkbox" id="rule-enabled" checked/>
+        <label for="rule-enabled">Enabled</label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button id="btn-cancel" class="btn btn-ghost">Cancel</button>
+      <button id="btn-save" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/settings.js"></script>
+{% endblock %}

@@ -1,2 +1,283 @@
-# Ai-cam-master
-Camera ai master 
+# 🎯 AI-Cam
+
+**AI-Cam** is an open-source, self-hosted AI-powered security camera monitoring system — built for private use and shareware. It provides the core features of commercial platforms like Coram AI, running entirely on your own hardware without any cloud subscription.
+
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)
+![YOLOv8](https://img.shields.io/badge/AI-YOLOv8-orange)
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| 📷 **Multi-camera support** | RTSP streams, USB webcams, HTTP MJPEG — add unlimited cameras |
+| 🤖 **AI Object Detection** | YOLOv8 real-time detection of persons, vehicles, animals, and 80+ COCO classes |
+| 🏃 **Motion Detection** | Background-subtraction motion detection (no AI needed) |
+| 📡 **Live Streaming** | MJPEG HTTP stream + WebSocket binary frames per camera |
+| 📸 **Event Snapshots** | Annotated JPEG saved on every detection with bounding boxes |
+| 🔔 **Alert Rules** | Per-camera or global rules, triggering on any class or event type |
+| 📧 **Notifications** | Console, email (SMTP), and webhook (POST JSON) |
+| 🖥️ **Web Dashboard** | Dark-themed dashboard with live camera tiles and event timeline |
+| 🗄️ **Local Storage** | SQLite database — no external services needed |
+| 🐳 **Docker support** | Single-command deployment with docker-compose |
+| 📚 **REST API** | Full OpenAPI/Swagger documentation at `/docs` |
+
+---
+
+## 🚀 Quick Start
+
+### Option A — Local Python
+
+```bash
+# 1. Clone
+git clone https://github.com/NightmareDesigns/Ai-cam-master.git
+cd Ai-cam-master
+
+# 2. Create virtualenv
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure (copy and edit as needed)
+cp .env.example .env
+
+# 5. Run
+python run.py
+```
+
+Open **http://localhost:8000** in your browser.
+
+### Option B — Docker
+
+```bash
+cp .env.example .env
+docker-compose up -d
+```
+
+Open **http://localhost:8000** in your browser.
+
+---
+
+## 🖼️ Dashboard Overview
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  🎯 AI-Cam                                              │
+├──────────┬──────────────────────────────────────────────┤
+│ 🏠 Home  │  Dashboard                                   │
+│ 📷 Cams  │  ┌───────────┐ ┌───────────┐ ┌───────────┐  │
+│ 🔔 Events│  │ Total Cams│ │  Online   │ │  Events   │  │
+│ ⚙️ Sett. │  │     4     │ │     3     │ │    17     │  │
+│ 📄 API   │  └───────────┘ └───────────┘ └───────────┘  │
+│          │                                              │
+│          │  Live Cameras                                │
+│          │  ┌─────────────┐ ┌─────────────┐           │
+│          │  │ Front Door  │ │  Parking    │           │
+│          │  │  [LIVE IMG] │ │  [LIVE IMG] │           │
+│          │  │ ●Live AI    │ │ ●Live AI    │           │
+│          │  └─────────────┘ └─────────────┘           │
+│          │                                              │
+│          │  Recent Events                               │
+│          │  [snapshot] Front Door  person  92%  2m ago │
+│          │  [snapshot] Parking     car     87%  5m ago │
+└──────────┴──────────────────────────────────────────────┘
+```
+
+---
+
+## ⚙️ Configuration
+
+All settings are controlled via environment variables or a `.env` file:
+
+| Variable | Default | Description |
+|---|---|---|
+| `HOST` | `0.0.0.0` | Bind address |
+| `PORT` | `8000` | HTTP port |
+| `DEBUG` | `false` | Enable hot-reload (dev only) |
+| `DATABASE_URL` | `sqlite:///./aicam.db` | SQLAlchemy DB URL |
+| `RECORDINGS_DIR` | `./recordings` | Video clip output directory |
+| `SNAPSHOTS_DIR` | `./snapshots` | Snapshot JPEG output directory |
+| `YOLO_MODEL` | `yolov8n.pt` | YOLOv8 model variant (`n/s/m/l/x`) |
+| `DETECTION_CONFIDENCE` | `0.45` | Minimum detection confidence (0–1) |
+| `TRACKED_CLASSES` | `person,car,…` | Comma-separated COCO class names to track |
+| `STREAM_FPS` | `10` | Target frames per second for live streams |
+| `ALERT_COOLDOWN_SECONDS` | `30` | Minimum seconds between repeated alerts |
+| `SMTP_HOST` | — | SMTP server for email alerts |
+| `ALERT_EMAIL_TO` | — | Destination email address for alerts |
+
+---
+
+## 📡 API Reference
+
+Full interactive docs at **http://localhost:8000/docs**
+
+### Cameras
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/cameras/` | List all cameras |
+| `POST` | `/api/cameras/` | Add a camera |
+| `GET` | `/api/cameras/{id}` | Get a camera |
+| `PATCH` | `/api/cameras/{id}` | Update a camera |
+| `DELETE` | `/api/cameras/{id}` | Delete a camera |
+
+### Events
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/events/` | List events (filterable by camera, type, class, date) |
+
+### Alert Rules
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/alerts/` | List alert rules |
+| `POST` | `/api/alerts/` | Create an alert rule |
+| `PATCH` | `/api/alerts/{id}` | Update an alert rule |
+| `DELETE` | `/api/alerts/{id}` | Delete an alert rule |
+
+### Streaming
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/stream/{camera_id}` | MJPEG live stream |
+| `GET` | `/snapshot/{camera_id}` | Latest JPEG frame |
+| `GET` | `/snapshots/file/{filename}` | Saved snapshot file |
+| `WS`  | `/ws/{camera_id}` | WebSocket binary frame stream |
+
+---
+
+## 🤖 AI Models
+
+AI-Cam uses **YOLOv8** (by Ultralytics). Models are automatically downloaded on first run.
+
+| Model | Size | Speed | Accuracy |
+|---|---|---|---|
+| `yolov8n.pt` | 6 MB | Fastest | Good (default) |
+| `yolov8s.pt` | 22 MB | Fast | Better |
+| `yolov8m.pt` | 52 MB | Medium | Even better |
+| `yolov8l.pt` | 87 MB | Slower | High |
+| `yolov8x.pt` | 136 MB | Slowest | Highest |
+
+Set `YOLO_MODEL=yolov8s.pt` in `.env` to use a larger model.
+
+---
+
+## 📸 Adding a Camera
+
+### USB Webcam
+```
+Source: 0
+```
+(Use `1`, `2`, etc. for additional USB cameras.)
+
+### RTSP IP Camera
+```
+Source: rtsp://username:password@192.168.1.100:554/stream1
+```
+
+### HTTP MJPEG
+```
+Source: http://192.168.1.100:8080/video
+```
+
+---
+
+## 🔔 Alert Rules Examples
+
+**Alert on any person detection, console only:**
+```json
+{
+  "name": "Person detected",
+  "trigger_class": "person",
+  "notify_via": "console"
+}
+```
+
+**Alert on any detection on camera 1, send to webhook:**
+```json
+{
+  "name": "Front door alert",
+  "camera_id": 1,
+  "trigger_class": "*",
+  "notify_via": "webhook",
+  "webhook_url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+}
+```
+
+**Email alert for vehicles:**
+```json
+{
+  "name": "Vehicle in parking lot",
+  "trigger_class": "car",
+  "notify_via": "email,console"
+}
+```
+
+---
+
+## 🧪 Running Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+Coverage report:
+```bash
+pytest --cov=src --cov-report=html
+```
+
+---
+
+## 🏗️ Project Structure
+
+```
+ai-cam-master/
+├── src/
+│   ├── main.py              # FastAPI app + lifespan
+│   ├── config.py            # Settings (pydantic-settings)
+│   ├── database.py          # SQLAlchemy engine + session
+│   ├── models/              # ORM models (Camera, Event, AlertRule)
+│   ├── schemas/             # Pydantic request/response models
+│   ├── camera/
+│   │   ├── stream.py        # Per-camera capture + detection thread
+│   │   └── manager.py       # Multi-camera orchestrator
+│   ├── detection/
+│   │   ├── detector.py      # YOLOv8 wrapper
+│   │   └── motion.py        # MOG2 motion detector
+│   ├── alerts/
+│   │   └── manager.py       # Alert rule evaluation + notifications
+│   ├── api/                 # FastAPI routers
+│   ├── static/              # CSS, JS, images
+│   └── templates/           # Jinja2 HTML templates
+├── tests/                   # pytest test suite
+├── run.py                   # Uvicorn entry point
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── .env.example
+```
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE).
+
+This software is intended for **private use** and **shareware** distribution.
+You may use, modify, and redistribute freely under the terms of the MIT License.
+
+---
+
+## 🙏 Acknowledgements
+
+- [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics) — AI detection
+- [FastAPI](https://fastapi.tiangolo.com/) — Web framework
+- [OpenCV](https://opencv.org/) — Video capture & processing
+- Inspired by [Coram AI](https://www.coram.ai/) — commercial reference implementation
