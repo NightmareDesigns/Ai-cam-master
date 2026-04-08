@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Dark background -->
+  <rect width="512" height="512" rx="80" fill="#080a0f"/>
+  <!-- Outer glow ring -->
+  <circle cx="256" cy="256" r="185" fill="none" stroke="#c0392b" stroke-width="6" opacity="0.6"/>
+  <!-- Eye white -->
+  <ellipse cx="256" cy="256" rx="160" ry="90" fill="#1a0a0a"/>
+  <!-- Iris -->
+  <circle cx="256" cy="256" r="72" fill="#6d28d9"/>
+  <!-- Pupil -->
+  <circle cx="256" cy="256" r="44" fill="#0d0010"/>
+  <!-- Inner eye glow -->
+  <circle cx="256" cy="256" r="36" fill="#c0392b" opacity="0.85"/>
+  <!-- Highlight reflection -->
+  <circle cx="275" cy="238" r="14" fill="white" opacity="0.25"/>
+  <!-- Upper eyelid lines -->
+  <path d="M96 256 Q256 96 416 256" fill="none" stroke="#c0392b" stroke-width="4" opacity="0.5"/>
+  <!-- Lower eyelid lines -->
+  <path d="M96 256 Q256 416 416 256" fill="none" stroke="#6d28d9" stroke-width="4" opacity="0.5"/>
+</svg>

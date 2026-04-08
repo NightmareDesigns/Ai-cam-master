@@ -26,6 +26,9 @@ python-dotenv==1.0.1
 # Notifications (optional email alerts)
 aiosmtplib==3.0.2
 
+# Desktop GUI (Windows & Linux – wraps the web UI in a native window)
+pywebview==6.1
+
 # Utilities
 httpx==0.27.2
 anyio==4.7.0

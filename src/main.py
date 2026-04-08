@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -89,6 +89,25 @@ def create_app() -> FastAPI:
     @app.get("/settings", response_class=HTMLResponse)
     async def settings_page(request: Request):
         return templates.TemplateResponse(request, "settings.html")
+
+    # ── PWA helpers ───────────────────────────────────────────────────────────
+
+    @app.get("/manifest.json", include_in_schema=False)
+    async def pwa_manifest():
+        path = static_dir / "manifest.json"
+        return Response(
+            content=path.read_bytes(),
+            media_type="application/manifest+json",
+        )
+
+    @app.get("/sw.js", include_in_schema=False)
+    async def service_worker():
+        path = static_dir / "sw.js"
+        return Response(
+            content=path.read_bytes(),
+            media_type="application/javascript",
+            headers={"Service-Worker-Allowed": "/"},
+        )
 
     return app
 

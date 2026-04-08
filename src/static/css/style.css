@@ -2,19 +2,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #252836;
-  --border: #2e3245;
-  --accent: #4f8ef7;
-  --accent2: #7c5cbf;
-  --danger: #e84855;
-  --success: #2fcb8f;
-  --warning: #f5a623;
+  /* ── NightmareDesigns palette ── */
+  --bg: #080a0f;
+  --surface: #0d1018;
+  --surface2: #131620;
+  --border: #1e2235;
+  --accent: #c0392b;        /* crimson — primary action colour */
+  --accent2: #6d28d9;       /* deep purple — secondary highlight */
+  --danger: #ff2d20;
+  --success: #10b981;
+  --warning: #f59e0b;
   --text: #e2e8f0;
   --text-muted: #6b7280;
   --radius: 10px;
-  --shadow: 0 4px 24px rgba(0,0,0,.45);
+  --shadow: 0 4px 24px rgba(0,0,0,.65);
+  --glow-accent: 0 0 18px rgba(192,57,43,.35);
+  --glow-accent2: 0 0 18px rgba(109,40,217,.35);
   --font: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -24,6 +27,22 @@ body {
   color: var(--text);
   min-height: 100vh;
   display: flex;
+}
+
+/* Subtle scanline overlay — the NightmareDesigns signature */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,.04) 3px,
+    rgba(0,0,0,.04) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
 }
 
 a { color: var(--accent); text-decoration: none; }
@@ -57,6 +76,7 @@ a:hover { text-decoration: underline; }
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   font-size: 20px;
+  box-shadow: var(--glow-accent);
 }
 
 .sidebar-logo h1 {
@@ -67,9 +87,12 @@ a:hover { text-decoration: underline; }
 
 .sidebar-logo span {
   font-size: 0.7rem;
-  color: var(--text-muted);
+  color: var(--accent);
   display: block;
   margin-top: 1px;
+  letter-spacing: .4px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .sidebar-nav {
@@ -89,7 +112,7 @@ a:hover { text-decoration: underline; }
   color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
-  transition: background .15s, color .15s;
+  transition: background .15s, color .15s, box-shadow .15s;
   text-decoration: none;
 }
 
@@ -101,6 +124,8 @@ a:hover { text-decoration: underline; }
 
 .sidebar-nav a.active {
   color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+  text-shadow: 0 0 10px rgba(192,57,43,.3);
 }
 
 .sidebar-nav .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
@@ -140,8 +165,8 @@ a:hover { text-decoration: underline; }
   display: inline-block;
   margin-right: 5px;
 }
-.status-dot.online { background: var(--success); }
-.status-dot.offline { background: var(--danger); }
+.status-dot.online  { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.status-dot.offline { background: var(--danger);  box-shadow: 0 0 6px var(--danger);  }
 
 .content { padding: 28px; flex: 1; }
 
@@ -177,6 +202,12 @@ a:hover { text-decoration: underline; }
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.stat-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
 }
 
 .stat-card .stat-label {
@@ -207,13 +238,19 @@ a:hover { text-decoration: underline; }
   border-radius: var(--radius);
   overflow: hidden;
   position: relative;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.camera-tile:hover {
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
 }
 
 .camera-tile img {
   width: 100%;
   aspect-ratio: 16/9;
   object-fit: cover;
-  background: #0d0f14;
+  background: #050608;
   display: block;
 }
 
@@ -235,10 +272,10 @@ a:hover { text-decoration: underline; }
   font-weight: 600;
 }
 
-.badge-success { background: rgba(47,203,143,.18); color: var(--success); }
-.badge-danger  { background: rgba(232,72,85,.18);  color: var(--danger);  }
-.badge-warning { background: rgba(245,166,35,.18); color: var(--warning); }
-.badge-accent  { background: rgba(79,142,247,.18); color: var(--accent);  }
+.badge-success { background: rgba(16,185,129,.18);  color: var(--success); }
+.badge-danger  { background: rgba(255,45,32,.18);   color: var(--danger);  }
+.badge-warning { background: rgba(245,158,11,.18);  color: var(--warning); }
+.badge-accent  { background: rgba(192,57,43,.18);   color: var(--accent);  }
 
 /* ── Tables ────────────────────────────────────────────────────────────── */
 .table-wrap { overflow-x: auto; }
@@ -280,7 +317,7 @@ tbody td { padding: 10px 14px; vertical-align: middle; }
   font-weight: 500;
   cursor: pointer;
   border: none;
-  transition: opacity .15s, transform .1s;
+  transition: opacity .15s, transform .1s, box-shadow .15s;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -289,6 +326,7 @@ tbody td { padding: 10px 14px; vertical-align: middle; }
 .btn:hover { opacity: .88; text-decoration: none; }
 
 .btn-primary  { background: var(--accent);   color: #fff; }
+.btn-primary:hover { box-shadow: var(--glow-accent); opacity: 1; }
 .btn-danger   { background: var(--danger);   color: #fff; }
 .btn-success  { background: var(--success);  color: #000; }
 .btn-ghost    { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
@@ -317,11 +355,12 @@ select, textarea {
   font-size: 0.875rem;
   font-family: inherit;
   outline: none;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s;
 }
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(192,57,43,.2);
 }
 
 .toggle { display: flex; align-items: center; gap: 10px; }
@@ -336,7 +375,7 @@ input[type=checkbox] {
 .modal-backdrop {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.7);
+  background: rgba(0,0,0,.8);
   z-index: 200;
   align-items: center;
   justify-content: center;
@@ -346,14 +385,14 @@ input[type=checkbox] {
 
 .modal {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent);
   border-radius: 12px;
   padding: 28px;
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), var(--glow-accent);
 }
 
 .modal h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; }
@@ -404,4 +443,9 @@ input[type=checkbox] {
   .main { margin-left: 60px; }
   .content { padding: 16px; }
   .camera-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Safe-area insets (notched / punched-hole phones) ──────────────────── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .main { padding-bottom: env(safe-area-inset-bottom); }
 }

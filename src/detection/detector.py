@@ -36,9 +36,11 @@ def load_model(model_path: str = "yolov8n.pt") -> None:
         return
     try:
         from ultralytics import YOLO  # type: ignore
+        from src.detection.model_manager import resolve_model  # noqa: PLC0415
 
-        logger.info("Loading YOLO model: %s", model_path)
-        _yolo_model = YOLO(model_path)
+        resolved = resolve_model(model_path)
+        logger.info("Loading YOLO model: %s", resolved)
+        _yolo_model = YOLO(resolved)
         _yolo_names = _yolo_model.names  # dict[int, str]
         logger.info("YOLO model loaded. Classes: %d", len(_yolo_names))
     except Exception as exc:  # pragma: no cover
