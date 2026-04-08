@@ -65,8 +65,9 @@ def resolve_model(model_name: str) -> str:
 
         tmp_model = YOLO(model_name)
 
-        # ultralytics writes the weights to CWD by default.
-        downloaded_cwd = Path(model_name)
+        # ultralytics writes the weights to CWD by default; use only the
+        # basename so a model_name like "subdir/yolov8n.pt" is handled safely.
+        downloaded_cwd = Path(Path(model_name).name)
         if downloaded_cwd.exists():
             shutil.move(str(downloaded_cwd), str(cached))
             logger.info(
