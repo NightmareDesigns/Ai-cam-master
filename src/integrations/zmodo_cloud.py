@@ -50,7 +50,7 @@ class ZmodoCloudClient:
         password_hash = hashlib.md5(self.password.encode()).hexdigest()
 
         payload = {
-            "email": self.email,
+            "email": self.email,  # Can be email or phone number
             "password": password_hash,
             "client": "1",  # App client (no captcha)
             "platform": "2",  # Platform identifier

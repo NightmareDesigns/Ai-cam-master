@@ -80,7 +80,7 @@ function initVendorLogins(config = {}) {
     const quality = getVal(zmodoCloud.quality) || 'hd';
 
     if (!email || !password) {
-      notify('Zmodo cloud email and password are required.', 'error');
+      notify('Zmodo cloud email/phone and password are required.', 'error');
       return;
     }
 
