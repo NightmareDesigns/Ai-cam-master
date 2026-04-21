@@ -39,6 +39,20 @@ class ZmodoLoginRequest(BaseModel):
     )
 
 
+class ZmodoCloudLoginRequest(BaseModel):
+    email: str = Field(..., description="Zmodo account email (for user.zmodo.com login).")
+    password: str = Field(..., description="Zmodo account password.")
+    quality: Literal["sd", "hd"] = Field(
+        default="hd", description="Stream quality: 'sd' (480p) or 'hd' (1080p)."
+    )
+    timeout_seconds: confloat(ge=1.0, le=30.0) = Field(
+        default=10.0, description="Timeout for Zmodo cloud API and stream calls."
+    )
+    max_cameras: conint(ge=1, le=32) = Field(
+        default=16, description="Limit how many Zmodo cameras are returned."
+    )
+
+
 class BlinkLoginRequest(BaseModel):
     username: str = Field(..., description="Blink account email/username.")
     password: str = Field(..., description="Blink account password.")
