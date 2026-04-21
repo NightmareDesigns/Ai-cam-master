@@ -87,6 +87,7 @@ async def discover_cameras(payload: DiscoveryRequest):
     results = await discovery.discover_cameras(
         subnets=payload.subnets,
         include_usb=payload.include_usb,
+        include_upnp=payload.include_upnp,
         max_hosts=payload.max_hosts,
         timeout_seconds=payload.timeout_seconds,
         max_results=payload.max_results,

@@ -26,11 +26,13 @@ class TestDiscoveryAPI:
         async def fake_discover(
             subnets=None,
             include_usb=True,
+            include_upnp=True,
             max_hosts=256,
-            timeout_seconds=0.75,
-            max_results=25,
+            timeout_seconds=1.5,
+            max_results=50,
         ) -> List[dict]:
             assert include_usb is False
+            assert include_upnp is True
             assert subnets == ["192.168.1.0/24"]
             assert max_results == 2
             return [

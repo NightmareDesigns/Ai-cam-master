@@ -25,14 +25,34 @@ import psutil
 
 logger = logging.getLogger(__name__)
 
-DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni", "eeseecam"]
+DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni", "eeseecam", "onvif", "upnp"]
 
-_RTSP_PORTS = (554, 8554, 10554, 7447)
-_HTTP_PORTS = (80, 8000, 8080, 8888)
+# Expanded port lists to cover more camera manufacturers
+_RTSP_PORTS = (554, 8554, 10554, 7447, 88, 5000, 37777, 34567, 9000)
+_HTTP_PORTS = (80, 8000, 8080, 8888, 81, 82, 85, 8081, 9000, 10000)
+_ONVIF_PORTS = (80, 8080, 8899, 5000, 10080)
 _MAX_USB_INDEX = 5
-_DEFAULT_TIMEOUT = 0.75
-_DEFAULT_MAX_RESULTS = 25
+_DEFAULT_TIMEOUT = 1.5  # Increased from 0.75 for better camera detection
+_DEFAULT_MAX_RESULTS = 50  # Increased from 25
 _DEFAULT_MAX_HOSTS = 256
+
+# Common RTSP paths used by various camera manufacturers
+_COMMON_RTSP_PATHS = [
+    "/",
+    "/stream",
+    "/stream1",
+    "/live",
+    "/live/ch00_0",
+    "/h264",
+    "/h264/ch1/main/av_stream",
+    "/cam/realmonitor",
+    "/user=admin&password=&channel=1&stream=0.sdp",
+    "/video.mjpg",
+    "/mediastream/live",
+    "/11",
+    "/onvif1",
+    "/media/video1",
+]
 
 
 @dataclass
@@ -197,16 +217,115 @@ async def _probe_http(ip: str, port: int, timeout: float) -> Optional[Discovered
             await writer.wait_closed()
 
 
+async def _probe_onvif(ip: str, port: int, timeout: float) -> Optional[DiscoveredCamera]:
+    """Probe for ONVIF/WS-Discovery enabled cameras."""
+    try:
+        from onvif import ONVIFCamera
+        from zeep.exceptions import Fault
+    except ImportError:
+        logger.debug("ONVIF support not available (onvif-zeep not installed)")
+        return None
+
+    try:
+        # Try to create an ONVIF camera connection
+        camera = ONVIFCamera(ip, port, "admin", "", f"/tmp/onvif_{ip}_{port}", no_cache=True)
+
+        # Try to get device information with a short timeout
+        loop = asyncio.get_event_loop()
+        device_info = await asyncio.wait_for(
+            loop.run_in_executor(None, lambda: camera.devicemgmt.GetDeviceInformation()),
+            timeout=timeout
+        )
+
+        manufacturer = getattr(device_info, 'Manufacturer', 'Unknown')
+        model = getattr(device_info, 'Model', 'Unknown')
+
+        return DiscoveredCamera(
+            source=f"onvif://{ip}:{port}",
+            label=f"ONVIF @ {ip}:{port} ({manufacturer} {model})",
+            type="onvif",
+            ip=ip,
+            port=port,
+            evidence=f"ONVIF device: {manufacturer} {model}",
+        )
+    except (Fault, Exception):
+        return None
+
+
+async def _discover_upnp_cameras(timeout: float) -> List[DiscoveredCamera]:
+    """Discover cameras via UPnP/SSDP protocol."""
+    try:
+        from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
+        from zeroconf.asyncio import AsyncZeroconf
+    except ImportError:
+        logger.debug("UPnP/mDNS support not available (zeroconf not installed)")
+        return []
+
+    discovered: List[DiscoveredCamera] = []
+
+    class CameraListener(ServiceListener):
+        def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+            info = zc.get_service_info(type_, name)
+            if info:
+                addresses = [socket.inet_ntoa(addr) for addr in info.addresses]
+                for addr in addresses:
+                    discovered.append(
+                        DiscoveredCamera(
+                            source=f"http://{addr}:{info.port}/",
+                            label=f"UPnP Device @ {addr}:{info.port}",
+                            type="upnp",
+                            ip=addr,
+                            port=info.port,
+                            evidence=f"mDNS service: {name}",
+                        )
+                    )
+
+    try:
+        aiozc = AsyncZeroconf()
+        zc = await aiozc.zeroconf
+
+        # Search for common camera service types
+        service_types = [
+            "_rtsp._tcp.local.",
+            "_axis-video._tcp.local.",
+            "_onvif._tcp.local.",
+            "_http._tcp.local.",
+        ]
+
+        browsers = []
+        listener = CameraListener()
+
+        for service_type in service_types:
+            browsers.append(ServiceBrowser(zc, service_type, listener))
+
+        # Wait for discovery
+        await asyncio.sleep(timeout)
+
+        await aiozc.async_close()
+
+    except Exception as exc:
+        logger.debug(f"UPnP discovery failed: {exc}")
+
+    return discovered
+
+
 async def _scan_host(ip: str, timeout: float, semaphore: asyncio.Semaphore) -> List[DiscoveredCamera]:
-    """Probe a single host for RTSP/HTTP endpoints."""
+    """Probe a single host for RTSP/HTTP/ONVIF endpoints."""
     results: List[DiscoveredCamera] = []
     async with semaphore:
+        # Probe RTSP ports
         for port in _RTSP_PORTS:
             res = await _probe_rtsp(ip, port, timeout)
             if res:
                 results.append(res)
+        # Probe HTTP ports
         for port in _HTTP_PORTS:
             res = await _probe_http(ip, port, timeout)
+            if res:
+                results.append(res)
+        # Probe ONVIF ports
+        for port in _ONVIF_PORTS:
+            res = await _probe_onvif(ip, port, timeout)
             if res:
                 results.append(res)
     return results
@@ -300,6 +419,7 @@ async def probe_snapshot_url(url: str, timeout: float) -> Optional[str]:
 async def discover_cameras(
     subnets: Optional[Sequence[str]] = None,
     include_usb: bool = True,
+    include_upnp: bool = True,
     max_hosts: int = _DEFAULT_MAX_HOSTS,
     timeout_seconds: float = _DEFAULT_TIMEOUT,
     max_results: int = _DEFAULT_MAX_RESULTS,
@@ -311,6 +431,7 @@ async def discover_cameras(
                  If omitted, we scan the host's active interfaces, clamped to
                  small networks.
         include_usb: Whether to probe local USB indexes.
+        include_upnp: Whether to use UPnP/mDNS discovery (zeroconf).
         max_hosts: Safety cap on how many hosts to sweep across all subnets.
         timeout_seconds: Socket timeout per host probe.
         max_results: Limit to avoid producing an overwhelming list.
@@ -324,6 +445,12 @@ async def discover_cameras(
         if len(results) >= max_results:
             return results[:max_results]
 
+    # UPnP/mDNS discovery runs in parallel with network scanning
+    upnp_task = None
+    if include_upnp:
+        upnp_task = asyncio.create_task(_discover_upnp_cameras(timeout_seconds * 2))
+
+    # Network scanning for RTSP/HTTP/ONVIF
     if networks:
         try:
             net_results = await _scan_networks(
@@ -335,6 +462,14 @@ async def discover_cameras(
             results.extend(net_results)
         except Exception as exc:
             logger.error("Network discovery failed: %s", exc)
+
+    # Collect UPnP results
+    if upnp_task:
+        try:
+            upnp_results = await upnp_task
+            results.extend(upnp_results)
+        except Exception as exc:
+            logger.error("UPnP discovery failed: %s", exc)
 
     # Deduplicate by source
     deduped: List[DiscoveredCamera] = []
