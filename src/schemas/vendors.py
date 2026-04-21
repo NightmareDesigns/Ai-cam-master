@@ -46,6 +46,10 @@ class BlinkLoginRequest(BaseModel):
         default=None,
         description="6-digit 2FA code when prompted by Blink.",
     )
+    two_factor_recovery_code: Optional[str] = Field(
+        default=None,
+        description="Recovery code if you cannot access your usual 2FA device.",
+    )
     timeout_seconds: confloat(ge=1.0, le=30.0) = Field(
         default=10.0, description="Timeout for Blink API and liveview calls."
     )

@@ -186,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
       user: '#blink-user-main',
       pass: '#blink-pass-main',
       otp: '#blink-otp-main',
+      recovery: '#blink-recovery-main',
       status: '#blink-status-main',
       button: '#btn-blink-login-main',
     },

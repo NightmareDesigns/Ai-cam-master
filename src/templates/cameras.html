@@ -250,7 +250,7 @@
     <div id="geeni-light-status" class="text-muted" style="margin-top:-4px;margin-bottom:8px">Ready.</div>
 
     <h3 style="margin:12px 0 6px 0">Blink login</h3>
-    <p class="text-muted" style="margin-top:0">Fetch liveview RTSP URLs from your Blink account (supports 2FA).</p>
+    <p class="text-muted" style="margin-top:0">Fetch liveview RTSP URLs from your Blink account (supports 2FA and recovery codes).</p>
     <div class="form-group form-inline">
       <div class="inline-inputs">
         <label>Email</label>
@@ -259,6 +259,8 @@
         <input type="password" id="blink-pass" placeholder="••••••••"/>
         <label>2FA</label>
         <input type="text" id="blink-otp" placeholder="123456"/>
+        <label>Recovery</label>
+        <input type="text" id="blink-recovery" placeholder="backup code (optional)" style="width:170px"/>
       </div>
       <button id="btn-blink-login" class="btn btn-primary btn-sm" style="margin-left:8px">Login to Blink</button>
     </div>

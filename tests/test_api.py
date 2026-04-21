@@ -110,6 +110,23 @@ class TestVendorIntegrations:
         assert r.status_code == 200
         assert r.json()[0]["type"] == "blink"
 
+    def test_blink_login_allows_recovery_code(self, monkeypatch, client: TestClient):
+        captured = {}
+
+        async def fake_fetch(payload):
+            captured["code"] = payload.two_factor_code
+            captured["recovery"] = payload.two_factor_recovery_code
+            return [{"source": "rtsps://example/live", "label": "Blink Cam", "type": "blink"}]
+
+        monkeypatch.setattr("src.api.cameras.fetch_blink_liveviews", fake_fetch)
+        r = client.post(
+            "/api/cameras/blink/login",
+            json={"username": "user@example.com", "password": "secret", "two_factor_recovery_code": "RCODE-123"},
+        )
+        assert r.status_code == 200
+        assert captured["code"] is None
+        assert captured["recovery"] == "RCODE-123"
+
     def test_geeni_camera_login(self, monkeypatch, client: TestClient):
         captured = {}
 

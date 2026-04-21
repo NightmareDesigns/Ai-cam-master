@@ -76,6 +76,7 @@ function initVendorLogins(config = {}) {
     const username = getVal(blink.user);
     const password = getEl(blink.pass)?.value ?? '';
     const twofa = getVal(blink.otp) || null;
+    const recovery = getVal(blink.recovery) || null;
 
     if (!username || !password) {
       notify('Blink email and password are required.', 'error');
@@ -86,6 +87,7 @@ function initVendorLogins(config = {}) {
     setStatus('blink', 'Logging in to Blink…');
     const body = { username, password };
     if (twofa) body.two_factor_code = twofa;
+    if (recovery) body.two_factor_recovery_code = recovery;
 
     try {
       const res = await API.post('/api/cameras/blink/login', body);
@@ -96,7 +98,7 @@ function initVendorLogins(config = {}) {
       setStatus('blink', label);
       if (onSuccess) onSuccess('blink', label);
     } catch (e) {
-      setStatus('blink', 'Login failed. Check credentials/2FA.');
+      setStatus('blink', 'Login failed. Check credentials/2FA/recovery code.');
       if (onError) onError('blink', e.message || 'Login failed');
       else notify('Blink login failed: ' + e.message, 'error');
     } finally {
