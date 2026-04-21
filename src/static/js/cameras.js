@@ -1,6 +1,8 @@
 /* ── Cameras management page ───────────────────────────────────────────── */
 
 let cameras = [];
+let discoveries = [];
+let discovering = false;
 
 async function loadCameras() {
   try {
@@ -121,9 +123,95 @@ async function deleteCamera(id) {
   }
 }
 
+/* ── Auto-discovery ────────────────────────────────────────────────────── */
+function renderDiscoveryResults() {
+  const container = document.getElementById('discover-results');
+  if (!container) return;
+  if (!discoveries.length) {
+    container.innerHTML = '<div class="discovery-empty">No results yet. Start a scan to see nearby cameras.</div>';
+    return;
+  }
+  container.innerHTML = discoveries
+    .map((d, idx) => `
+      <div class="discovery-card">
+        <div class="discovery-main">
+          <div class="discovery-label">${d.label}</div>
+          <div class="discovery-meta">
+            <span class="badge badge-accent">${d.type.toUpperCase()}</span>
+            ${d.port ? `<span class="badge badge-warning">:${d.port}</span>` : ''}
+          </div>
+          <div class="discovery-source">${d.source}</div>
+          ${d.evidence ? `<div class="text-muted" style="font-size:.8rem">${d.evidence}</div>` : ''}
+        </div>
+        <div class="discovery-actions">
+          <button class="btn btn-primary btn-sm" onclick="addDiscovery(${idx})">Add</button>
+        </div>
+      </div>
+    `)
+    .join('');
+}
+
+function openDiscover() {
+  discoveries = [];
+  renderDiscoveryResults();
+  setDiscoveryStatus('Ready to scan.');
+  const modal = document.getElementById('discovery-modal');
+  if (modal) modal.classList.add('open');
+}
+
+function closeDiscover() {
+  const modal = document.getElementById('discovery-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function setDiscoveryStatus(text) {
+  const el = document.getElementById('discover-status');
+  if (el) el.textContent = text;
+}
+
+async function runDiscovery() {
+  if (discovering) return;
+  discovering = true;
+  setDiscoveryStatus('Scanning…');
+  const subnetsInput = document.getElementById('discover-subnets')?.value || '';
+  const subnets = subnetsInput
+    .split(/[,\\n\\s]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  const body = {
+    include_usb: document.getElementById('discover-include-usb')?.checked ?? true,
+    timeout_seconds: parseFloat(document.getElementById('discover-timeout')?.value || '0.75') || 0.75,
+    max_results: parseInt(document.getElementById('discover-max-results')?.value || '25', 10) || 25,
+  };
+  if (subnets.length) body.subnets = subnets;
+  try {
+    discoveries = await API.post('/api/cameras/discover', body);
+    renderDiscoveryResults();
+    setDiscoveryStatus(`Found ${discoveries.length} potential camera${discoveries.length === 1 ? '' : 's'}.`);
+  } catch (e) {
+    toast('Discovery failed: ' + e.message, 'error');
+    setDiscoveryStatus('Discovery failed. Adjust subnets or timeout and retry.');
+  } finally {
+    discovering = false;
+  }
+}
+
+function addDiscovery(idx) {
+  const d = discoveries[idx];
+  if (!d) return;
+  openAdd();
+  document.getElementById('cam-name').value = d.label || 'Auto-discovered camera';
+  document.getElementById('cam-source').value = d.source;
+  document.getElementById('cam-detect-objects').checked = true;
+  document.getElementById('cam-detect-motion').checked = true;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadCameras();
   document.getElementById('btn-add-camera').addEventListener('click', openAdd);
   document.getElementById('btn-cancel').addEventListener('click', closeModal);
   document.getElementById('btn-save').addEventListener('click', saveCamera);
+  document.getElementById('btn-discover').addEventListener('click', openDiscover);
+  document.getElementById('btn-close-discover').addEventListener('click', closeDiscover);
+  document.getElementById('btn-run-discover').addEventListener('click', runDiscovery);
 });

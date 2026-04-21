@@ -186,6 +186,11 @@ Source: rtsp://username:password@192.168.1.100:554/stream1
 Source: http://192.168.1.100:8080/video
 ```
 
+### Auto-discover (LAN + USB)
+- In the **Cameras** page, click **Auto-discover** to scan local subnets (RTSP/HTTP ports) and USB webcams.
+- Provide optional subnets (e.g. `192.168.1.0/24`) or leave blank to scan active interfaces.
+- Results can be added directly or used as a starting point for manual configuration.
+
 ---
 
 ## 🔔 Alert Rules Examples
