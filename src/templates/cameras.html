@@ -6,6 +6,7 @@
 <div class="topbar">
   <span class="topbar-title">Camera Management</span>
   <div class="topbar-right">
+    <button id="btn-discover" class="btn btn-accent btn-sm">🔍 Auto-discover</button>
     <button id="btn-add-camera" class="btn btn-primary btn-sm">+ Add Camera</button>
   </div>
 </div>
@@ -79,6 +80,45 @@
     <div class="modal-footer">
       <button id="btn-cancel" class="btn btn-ghost">Cancel</button>
       <button id="btn-save" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auto-Discover Modal -->
+<div class="modal-backdrop" id="discovery-modal">
+  <div class="modal modal-wide">
+    <h2>Auto-discover Cameras</h2>
+    <p class="text-muted" style="margin-bottom:12px">
+      Scans your LAN for RTSP/HTTP cameras and probes local USB webcams. Only small subnets are scanned to keep things fast.
+    </p>
+
+    <div class="form-group">
+      <label>Subnets to scan (comma separated)</label>
+      <input type="text" id="discover-subnets" placeholder="192.168.1.0/24,10.0.0.0/24"/>
+      <small class="text-muted">Leave blank to scan active interfaces (capped to /24).</small>
+    </div>
+
+    <div class="form-group form-inline">
+      <div class="toggle">
+        <input type="checkbox" id="discover-include-usb" checked/>
+        <label for="discover-include-usb">Include USB webcams</label>
+      </div>
+      <div class="inline-inputs">
+        <label>Timeout (s)</label>
+        <input type="number" id="discover-timeout" value="0.75" min="0.1" max="5" step="0.05"/>
+        <label>Max results</label>
+        <input type="number" id="discover-max-results" value="25" min="1" max="200" step="1"/>
+      </div>
+    </div>
+
+    <div id="discover-status" class="text-muted" style="margin: 12px 0">Ready to scan.</div>
+    <div id="discover-results" class="discovery-list">
+      <div class="discovery-empty">No results yet. Start a scan to see nearby cameras.</div>
+    </div>
+
+    <div class="modal-footer">
+      <button id="btn-close-discover" class="btn btn-ghost">Close</button>
+      <button id="btn-run-discover" class="btn btn-primary">Run scan</button>
     </div>
   </div>
 </div>

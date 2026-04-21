@@ -7,10 +7,12 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from src.camera import discovery
 from src.camera.manager import camera_manager
 from src.database import get_db
 from src.models.camera import Camera
 from src.schemas.camera import CameraCreate, CameraRead, CameraUpdate
+from src.schemas.discovery import DiscoveredCamera, DiscoveryRequest
 
 router = APIRouter(prefix="/api/cameras", tags=["cameras"])
 
@@ -72,3 +74,16 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db)):
     camera_manager.remove_camera(cam.id)
     db.delete(cam)
     db.commit()
+
+
+@router.post("/discover", response_model=List[DiscoveredCamera])
+async def discover_cameras(payload: DiscoveryRequest):
+    """Scan local interfaces and USB devices for cameras."""
+    results = await discovery.discover_cameras(
+        subnets=payload.subnets,
+        include_usb=payload.include_usb,
+        max_hosts=payload.max_hosts,
+        timeout_seconds=payload.timeout_seconds,
+        max_results=payload.max_results,
+    )
+    return results
