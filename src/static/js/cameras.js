@@ -3,8 +3,6 @@
 let cameras = [];
 let discoveries = [];
 let discovering = false;
-let vendorBusy = { zmodo: false, blink: false };
-
 async function loadCameras() {
   try {
     cameras = await API.get('/api/cameras/');
@@ -212,74 +210,6 @@ async function runDiscovery() {
   }
 }
 
-async function loginZmodo() {
-  if (vendorBusy.zmodo) return;
-  const host = document.getElementById('zmodo-host')?.value.trim();
-  const user = document.getElementById('zmodo-user')?.value.trim();
-  const pass = document.getElementById('zmodo-pass')?.value ?? '';
-  const port = parseInt(document.getElementById('zmodo-port')?.value || '10554', 10) || 10554;
-  const channel = parseInt(document.getElementById('zmodo-channel')?.value || '0', 10) || 0;
-  const transport = document.getElementById('zmodo-transport')?.value || 'tcp';
-  const statusEl = document.getElementById('zmodo-status');
-
-  if (!host || !user || !pass) {
-    toast('Zmodo host, user, and password are required.', 'error');
-    return;
-  }
-  vendorBusy.zmodo = true;
-  if (statusEl) statusEl.textContent = 'Contacting Zmodo…';
-
-  const body = {
-    host,
-    username: user,
-    password: pass,
-    port,
-    channel,
-    transport,
-  };
-
-  try {
-    const res = await API.post('/api/cameras/zmodo/login', body);
-    mergeDiscoveries(res || []);
-    const label = res?.length ? `Added ${res.length} stream${res.length === 1 ? '' : 's'}.` : 'No streams returned.';
-    if (statusEl) statusEl.textContent = label;
-  } catch (e) {
-    toast('Zmodo login failed: ' + e.message, 'error');
-    if (statusEl) statusEl.textContent = 'Login failed. Check credentials/IP and retry.';
-  } finally {
-    vendorBusy.zmodo = false;
-  }
-}
-
-async function loginBlink() {
-  if (vendorBusy.blink) return;
-  const username = document.getElementById('blink-user')?.value.trim();
-  const password = document.getElementById('blink-pass')?.value ?? '';
-  const twofa = document.getElementById('blink-otp')?.value.trim() || null;
-  const statusEl = document.getElementById('blink-status');
-  if (!username || !password) {
-    toast('Blink email and password are required.', 'error');
-    return;
-  }
-  vendorBusy.blink = true;
-  if (statusEl) statusEl.textContent = 'Logging in to Blink…';
-
-  const body = { username, password };
-  if (twofa) body.two_factor_code = twofa;
-
-  try {
-    const res = await API.post('/api/cameras/blink/login', body);
-    mergeDiscoveries(res || []);
-    const label = res?.length ? `Fetched ${res.length} Blink camera${res.length === 1 ? '' : 's'}.` : 'No Blink cameras returned.';
-    if (statusEl) statusEl.textContent = label;
-  } catch (e) {
-    toast('Blink login failed: ' + e.message, 'error');
-    if (statusEl) statusEl.textContent = 'Login failed. Check credentials/2FA.';
-  } finally {
-    vendorBusy.blink = false;
-  }
-}
-
 function addDiscovery(idx) {
   const d = discoveries[idx];
   if (!d) return;
@@ -298,6 +228,31 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-discover').addEventListener('click', openDiscover);
   document.getElementById('btn-close-discover').addEventListener('click', closeDiscover);
   document.getElementById('btn-run-discover').addEventListener('click', runDiscovery);
-  document.getElementById('btn-zmodo-login').addEventListener('click', loginZmodo);
-  document.getElementById('btn-blink-login').addEventListener('click', loginBlink);
+
+  initVendorLogins({
+    zmodo: {
+      host: '#zmodo-host',
+      user: '#zmodo-user',
+      pass: '#zmodo-pass',
+      port: '#zmodo-port',
+      channel: '#zmodo-channel',
+      transport: '#zmodo-transport',
+      status: '#zmodo-status',
+      button: '#btn-zmodo-login',
+    },
+    blink: {
+      user: '#blink-user',
+      pass: '#blink-pass',
+      otp: '#blink-otp',
+      status: '#blink-status',
+      button: '#btn-blink-login',
+    },
+    onResults: streams => {
+      if (Array.isArray(streams)) mergeDiscoveries(streams);
+    },
+    onError: (vendor, msg) => {
+      const name = vendor === 'zmodo' ? 'Zmodo' : 'Blink';
+      toast(`${name} login failed: ${msg}`, 'error');
+    },
+  });
 });

@@ -37,6 +37,66 @@
   </div>
 </div>
 
+<!-- Vendor logins -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header">
+    <h2>Vendor Logins</h2>
+    <span class="text-muted" style="font-size:0.9rem">Pull RTSP streams from Zmodo or Blink without leaving the main page.</span>
+  </div>
+  <div class="vendor-grid">
+    <div class="vendor-panel">
+      <h3>🛡️ Zmodo</h3>
+      <small>Build and validate RTSP URLs (default port 10554).</small>
+      <div class="form-group form-inline" style="margin-top:10px">
+        <div class="inline-inputs">
+          <label>Host/IP</label>
+          <input type="text" id="zmodo-host-main" placeholder="192.168.1.50"/>
+          <label>User</label>
+          <input type="text" id="zmodo-user-main" placeholder="admin"/>
+          <label>Pass</label>
+          <input type="password" id="zmodo-pass-main" placeholder="password"/>
+        </div>
+      </div>
+      <div class="form-group form-inline">
+        <div class="inline-inputs">
+          <label>Port</label>
+          <input type="number" id="zmodo-port-main" value="10554" min="1" max="65535" step="1"/>
+          <label>Channel</label>
+          <input type="number" id="zmodo-channel-main" value="0" min="0" max="8" step="1"/>
+          <label>Transport</label>
+          <select id="zmodo-transport-main">
+            <option value="tcp" selected>TCP</option>
+            <option value="udp">UDP</option>
+          </select>
+        </div>
+        <button id="btn-zmodo-login-main" class="btn btn-accent btn-sm" style="margin-left:8px">Login</button>
+      </div>
+      <div id="zmodo-status-main" class="vendor-status">Ready.</div>
+    </div>
+
+    <div class="vendor-panel">
+      <h3>👁️ Blink</h3>
+      <small>Fetch liveview RTSP URLs (supports 2FA).</small>
+      <div class="form-group form-inline" style="margin-top:10px">
+        <div class="inline-inputs">
+          <label>Email</label>
+          <input type="text" id="blink-user-main" placeholder="you@example.com"/>
+          <label>Password</label>
+          <input type="password" id="blink-pass-main" placeholder="••••••••"/>
+          <label>2FA</label>
+          <input type="text" id="blink-otp-main" placeholder="123456"/>
+        </div>
+        <button id="btn-blink-login-main" class="btn btn-primary btn-sm" style="margin-left:8px">Login</button>
+      </div>
+      <div id="blink-status-main" class="vendor-status">Ready.</div>
+    </div>
+  </div>
+
+  <div id="vendor-results" class="discovery-list matrix-card">
+    <div class="discovery-empty">Log in above to see vendor streams you can save as cameras.</div>
+  </div>
+</div>
+
 <!-- Camera grid -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">

@@ -59,6 +59,41 @@ function badgeHtml(label, type = 'accent') {
   return `<span class="badge badge-${type}">${label}</span>`;
 }
 
+function initMatrixRain() {
+  const canvas = document.getElementById('matrix-bg');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+  const chars = '01░▒▓█ACEGHKMNRSTVXZ';
+  let drops = Array(Math.floor(width / 18)).fill(1);
+
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    drops = Array(Math.floor(width / 18)).fill(1);
+  }
+  window.addEventListener('resize', resize);
+
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#39ff14';
+    ctx.shadowColor = 'rgba(57,255,20,0.35)';
+    ctx.shadowBlur = 6;
+    ctx.font = '16px "Share Tech Mono", monospace';
+
+    drops.forEach((drop, i) => {
+      const text = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(text, i * 18, drop * 18);
+      if (drop * 18 > height && Math.random() > 0.965) drops[i] = 0;
+      drops[i] = drops[i] + 1;
+    });
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+}
+
 /* Highlight the active nav item */
 document.addEventListener('DOMContentLoaded', () => {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
@@ -66,4 +101,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const href = a.getAttribute('href').replace(/\/$/, '') || '/';
     if (href === path) a.classList.add('active');
   });
+  initMatrixRain();
 });
