@@ -107,7 +107,7 @@ async def blink_login(payload: BlinkLoginRequest):
     except BlinkTwoFARequiredError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Two-factor authentication code required for Blink login.",
+            detail="Two-factor authentication or recovery code required for Blink login.",
         )
     except BlinkLoginError as exc:
         raise HTTPException(

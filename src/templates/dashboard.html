@@ -82,7 +82,7 @@
 
     <div class="vendor-panel">
       <h3>👁️ Blink</h3>
-      <small>Fetch liveview RTSP URLs (supports 2FA).</small>
+      <small>Fetch liveview RTSP URLs (supports 2FA and recovery codes).</small>
       <div class="form-group form-inline" style="margin-top:10px">
         <div class="inline-inputs">
           <label>Email</label>
@@ -91,6 +91,8 @@
           <input type="password" id="blink-pass-main" placeholder="••••••••"/>
           <label>2FA</label>
           <input type="text" id="blink-otp-main" placeholder="123456"/>
+          <label>Recovery</label>
+          <input type="text" id="blink-recovery-main" placeholder="backup code (optional)" style="width:170px"/>
         </div>
         <button id="btn-blink-login-main" class="btn btn-primary btn-sm" style="margin-left:8px">Login</button>
       </div>

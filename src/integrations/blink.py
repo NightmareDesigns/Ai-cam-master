@@ -31,11 +31,12 @@ async def fetch_blink_liveviews(payload: BlinkLoginRequest) -> List[DiscoveredCa
         try:
             await asyncio.wait_for(blink.start(), timeout=payload.timeout_seconds)
         except BlinkTwoFARequiredError:
-            if not payload.two_factor_code:
+            twofa = payload.two_factor_code or payload.two_factor_recovery_code
+            if not twofa:
                 raise
-            ok = await blink.auth.complete_2fa_login(payload.two_factor_code)
+            ok = await blink.auth.complete_2fa_login(twofa)
             if not ok:
-                raise LoginError("Invalid Blink 2FA code")
+                raise LoginError("Invalid Blink 2FA or recovery code")
             await asyncio.wait_for(blink.start(), timeout=payload.timeout_seconds)
         except (LoginError, BlinkSetupError, TokenRefreshFailed) as exc:
             raise LoginError(f"Blink login failed: {exc}") from exc
