@@ -212,16 +212,42 @@ document.addEventListener('DOMContentLoaded', () => {
         button: '#btn-geeni-light-main',
       },
     },
+    eesee: {
+      host: '#eesee-host-main',
+      user: '#eesee-user-main',
+      pass: '#eesee-pass-main',
+      port: '#eesee-port-main',
+      channel: '#eesee-channel-main',
+      subtype: '#eesee-subtype-main',
+      path: '#eesee-path-main',
+      snapshotPath: '#eesee-snapshot-path-main',
+      httpPort: '#eesee-http-port-main',
+      snapshotMode: '#eesee-snapshot-main',
+      status: '#eesee-status-main',
+      button: '#btn-eesee-login-main',
+    },
     onResults: streams => {
       vendorStreams = Array.isArray(streams) ? streams : [];
       renderVendorStreams();
     },
     onError: (vendor, msg) => {
-      const name = vendor === 'zmodo' ? 'Zmodo' : vendor === 'blink' ? 'Blink' : 'Geeni';
+      const name = vendor === 'zmodo'
+        ? 'Zmodo'
+        : vendor === 'blink'
+          ? 'Blink'
+          : vendor === 'geeni' || vendor === 'geeniLight'
+            ? 'Geeni'
+            : 'EseeCam';
       toast(`${name} login failed: ${msg}`, 'error');
     },
     onSuccess: (vendor, msg) => {
-      const name = vendor === 'zmodo' ? 'Zmodo' : vendor === 'blink' ? 'Blink' : 'Geeni';
+      const name = vendor === 'zmodo'
+        ? 'Zmodo'
+        : vendor === 'blink'
+          ? 'Blink'
+          : vendor === 'geeni' || vendor === 'geeniLight'
+            ? 'Geeni'
+            : 'EseeCam';
       toast(`${name}: ${msg}`, 'success');
     },
   });

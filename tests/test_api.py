@@ -133,6 +133,30 @@ class TestVendorIntegrations:
         assert captured["payload"].host == "10.0.0.9"
         assert r.json()[0]["type"] == "geeni"
 
+    def test_eeseecam_login(self, monkeypatch, client: TestClient):
+        captured = {}
+
+        async def fake_build(payload):
+            captured["payload"] = payload
+            return [{"source": "rtsp://admin:pass@10.0.0.44/cam/realmonitor?channel=1&subtype=0", "label": "EseeCam", "type": "eeseecam"}]
+
+        monkeypatch.setattr("src.api.cameras.build_eeseecam_stream", fake_build)
+
+        r = client.post(
+            "/api/cameras/eeseecam/login",
+            json={
+                "host": "10.0.0.44",
+                "username": "admin",
+                "password": "pass",
+                "channel": 1,
+                "subtype": 0,
+                "port": 554,
+            },
+        )
+        assert r.status_code == 200
+        assert captured["payload"].host == "10.0.0.44"
+        assert r.json()[0]["type"] == "eeseecam"
+
     def test_geeni_light_toggle(self, monkeypatch, client: TestClient):
         async def fake_control(payload):
             return {"device_id": payload.device_id, "on": payload.state}

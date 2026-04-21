@@ -151,6 +151,50 @@
 
     <hr/>
 
+    <h3 style="margin:12px 0 6px 0">EseeCam login</h3>
+    <p class="text-muted" style="margin-top:0">EseeCloud/EseeCam RTSP builder with optional snapshot fallback.</p>
+    <div class="form-group form-inline">
+      <div class="inline-inputs">
+        <label>Host/IP</label>
+        <input type="text" id="eesee-host" placeholder="192.168.1.60"/>
+        <label>User</label>
+        <input type="text" id="eesee-user" value="admin"/>
+        <label>Pass</label>
+        <input type="password" id="eesee-pass" placeholder="password"/>
+      </div>
+    </div>
+    <div class="form-group form-inline">
+      <div class="inline-inputs">
+        <label>RTSP</label>
+        <input type="number" id="eesee-port" value="554" min="1" max="65535" step="1" style="width:90px"/>
+        <label>Channel</label>
+        <input type="number" id="eesee-channel" value="1" min="1" max="32" step="1" style="width:80px"/>
+        <label>Substream</label>
+        <select id="eesee-subtype" style="width:120px">
+          <option value="0" selected>Main (0)</option>
+          <option value="1">Sub (1)</option>
+        </select>
+        <label>Path</label>
+        <input type="text" id="eesee-path" value="cam/realmonitor" style="width:170px"/>
+      </div>
+    </div>
+    <div class="form-group form-inline">
+      <div class="inline-inputs">
+        <label>HTTP</label>
+        <input type="number" id="eesee-http-port" value="80" min="1" max="65535" step="1" style="width:90px"/>
+        <label>Snapshot path</label>
+        <input type="text" id="eesee-snapshot-path" value="/webcapture.jpg?command=snap&amp;channel={channel}" style="width:240px"/>
+        <label style="display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="eesee-snapshot"/>
+          Snapshot mode
+        </label>
+      </div>
+      <button id="btn-eesee-login" class="btn btn-primary btn-sm" style="margin-left:8px">Login to EseeCam</button>
+    </div>
+    <div id="eesee-status" class="text-muted" style="margin-top:-4px;margin-bottom:8px">Ready.</div>
+
+    <hr/>
+
     <h3 style="margin:12px 0 6px 0">Geeni (Tuya) login</h3>
     <p class="text-muted" style="margin-top:0">Use RTSP if available or snapshot-only mode for cloud-locked models.</p>
     <div class="form-group form-inline">

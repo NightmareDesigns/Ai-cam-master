@@ -166,8 +166,12 @@ function openDiscover() {
   setDiscoveryStatus('Ready to scan.');
   const zmodoStatus = document.getElementById('zmodo-status');
   const blinkStatus = document.getElementById('blink-status');
+  const geeniStatus = document.getElementById('geeni-status');
+  const eeseeStatus = document.getElementById('eesee-status');
   if (zmodoStatus) zmodoStatus.textContent = 'Ready.';
   if (blinkStatus) blinkStatus.textContent = 'Ready.';
+  if (geeniStatus) geeniStatus.textContent = 'Ready.';
+  if (eeseeStatus) eeseeStatus.textContent = 'Ready.';
   const modal = document.getElementById('discovery-modal');
   if (modal) modal.classList.add('open');
 }
@@ -272,11 +276,31 @@ document.addEventListener('DOMContentLoaded', () => {
         button: '#btn-geeni-light',
       },
     },
+    eesee: {
+      host: '#eesee-host',
+      user: '#eesee-user',
+      pass: '#eesee-pass',
+      port: '#eesee-port',
+      channel: '#eesee-channel',
+      subtype: '#eesee-subtype',
+      path: '#eesee-path',
+      snapshotPath: '#eesee-snapshot-path',
+      httpPort: '#eesee-http-port',
+      snapshotMode: '#eesee-snapshot',
+      status: '#eesee-status',
+      button: '#btn-eesee-login',
+    },
     onResults: streams => {
       if (Array.isArray(streams)) mergeDiscoveries(streams);
     },
     onError: (vendor, msg) => {
-      const name = vendor === 'zmodo' ? 'Zmodo' : vendor === 'blink' ? 'Blink' : 'Geeni';
+      const name = vendor === 'zmodo'
+        ? 'Zmodo'
+        : vendor === 'blink'
+          ? 'Blink'
+          : vendor === 'geeni' || vendor === 'geeniLight'
+            ? 'Geeni'
+            : 'EseeCam';
       toast(`${name} login failed: ${msg}`, 'error');
     },
   });

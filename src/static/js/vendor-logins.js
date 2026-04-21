@@ -1,8 +1,8 @@
 /* ── Shared vendor login helpers (Zmodo + Blink + Geeni) ─────────────── */
 
 function initVendorLogins(config = {}) {
-  const busy = { zmodo: false, blink: false, geeni: false, geeniLight: false };
-  const { zmodo = {}, blink = {}, geeni = {}, onResults, onError, onSuccess, onStatus } = config;
+  const busy = { zmodo: false, blink: false, geeni: false, geeniLight: false, eesee: false };
+  const { zmodo = {}, blink = {}, geeni = {}, eesee = {}, onResults, onError, onSuccess, onStatus } = config;
   const geeniCam = geeni.camera || {};
   const geeniLight = geeni.light || {};
 
@@ -19,6 +19,7 @@ function initVendorLogins(config = {}) {
     else if (vendor === 'blink') statusEl = getEl(blink.status);
     else if (vendor === 'geeni') statusEl = getEl(geeniCam.status);
     else if (vendor === 'geeniLight') statusEl = getEl(geeniLight.status);
+    else if (vendor === 'eesee') statusEl = getEl(eesee.status);
     if (statusEl) statusEl.textContent = text;
     if (typeof onStatus === 'function') onStatus(vendor, text);
   };
@@ -148,6 +149,57 @@ function initVendorLogins(config = {}) {
     }
   }
 
+  async function loginEseeCam() {
+    if (busy.eesee) return;
+    const host = getVal(eesee.host);
+    const user = getVal(eesee.user) || 'admin';
+    const pass = getEl(eesee.pass)?.value ?? '';
+    const port = parseInt(getVal(eesee.port) || '554', 10) || 554;
+    const channel = parseInt(getVal(eesee.channel) || '1', 10) || 1;
+    const subtype = parseInt(getVal(eesee.subtype) || '0', 10);
+    const streamPath = getVal(eesee.path) || 'cam/realmonitor';
+    const snapshotPath = getVal(eesee.snapshotPath) || '/webcapture.jpg?command=snap&channel={channel}';
+    const httpPort = parseInt(getVal(eesee.httpPort) || '80', 10) || 80;
+    const preferSnapshot = Boolean(getEl(eesee.snapshotMode)?.checked);
+
+    if (!host) {
+      notify('EseeCam host/IP is required.', 'error');
+      return;
+    }
+
+    busy.eesee = true;
+    setStatus('eesee', 'Contacting EseeCam…');
+    const body = {
+      host,
+      username: user,
+      password: pass,
+      port,
+      channel,
+      subtype: Number.isInteger(subtype) ? subtype : 0,
+      stream_path: streamPath,
+      snapshot_path: snapshotPath,
+      http_port: httpPort,
+      mode: preferSnapshot ? 'jpeg' : 'rtsp',
+      fallback_to_snapshot: true,
+    };
+
+    try {
+      const res = await API.post('/api/cameras/eeseecam/login', body);
+      if (onResults) onResults(res || []);
+      const label = res?.length
+        ? `Added ${res.length} EseeCam stream${res.length === 1 ? '' : 's'}.`
+        : 'No EseeCam streams returned.';
+      setStatus('eesee', label);
+      if (onSuccess) onSuccess('eesee', label);
+    } catch (e) {
+      setStatus('eesee', 'Login failed. Check IP/credentials and retry.');
+      if (onError) onError('eesee', e.message || 'Login failed');
+      else notify('EseeCam login failed: ' + e.message, 'error');
+    } finally {
+      busy.eesee = false;
+    }
+  }
+
   async function toggleGeeniLight() {
     if (busy.geeniLight) return;
     const deviceId = getVal(geeniLight.deviceId);
@@ -191,16 +243,19 @@ function initVendorLogins(config = {}) {
   const bButton = getEl(blink.button);
   const gButton = getEl(geeniCam.button);
   const glButton = getEl(geeniLight.button);
+  const eButton = getEl(eesee.button);
   if (zButton) zButton.addEventListener('click', loginZmodo);
   if (bButton) bButton.addEventListener('click', loginBlink);
   if (gButton) gButton.addEventListener('click', loginGeeniCamera);
   if (glButton) glButton.addEventListener('click', toggleGeeniLight);
+  if (eButton) eButton.addEventListener('click', loginEseeCam);
 
   // Initialize statuses to Ready when present
   if (getEl(zmodo.status)) setStatus('zmodo', 'Ready.');
   if (getEl(blink.status)) setStatus('blink', 'Ready.');
   if (getEl(geeniCam.status)) setStatus('geeni', 'Ready.');
   if (getEl(geeniLight.status)) setStatus('geeniLight', 'Ready.');
+  if (getEl(eesee.status)) setStatus('eesee', 'Ready.');
 
-  return { loginZmodo, loginBlink, loginGeeniCamera, toggleGeeniLight };
+  return { loginZmodo, loginBlink, loginGeeniCamera, loginEseeCam, toggleGeeniLight };
 }

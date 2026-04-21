@@ -11,12 +11,13 @@ from blinkpy.auth import BlinkTwoFARequiredError, LoginError as BlinkLoginError
 from src.camera import discovery
 from src.integrations.blink import fetch_blink_liveviews
 from src.integrations.zmodo import build_zmodo_stream
+from src.integrations.eeseecam import build_eeseecam_stream
 from src.camera.manager import camera_manager
 from src.database import get_db
 from src.models.camera import Camera
 from src.schemas.camera import CameraCreate, CameraRead, CameraUpdate
 from src.schemas.discovery import DiscoveredCamera, DiscoveryRequest
-from src.schemas.vendors import BlinkLoginRequest, ZmodoLoginRequest
+from src.schemas.vendors import BlinkLoginRequest, ZmodoLoginRequest, EseeCamLoginRequest
 
 router = APIRouter(prefix="/api/cameras", tags=["cameras"])
 
@@ -119,3 +120,9 @@ async def blink_login(payload: BlinkLoginRequest):
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Blink login failed: {exc}",
         ) from exc
+
+
+@router.post("/eeseecam/login", response_model=List[DiscoveredCamera])
+async def eeseecam_login(payload: EseeCamLoginRequest):
+    """Build an EseeCam RTSP URL with snapshot fallback."""
+    return await build_eeseecam_stream(payload)

@@ -84,6 +84,43 @@ class GeeniCameraRequest(BaseModel):
     )
 
 
+class EseeCamLoginRequest(BaseModel):
+    host: str = Field(..., description="IP or hostname of the EseeCloud/EseeCam device.")
+    username: str = Field(default="admin", description="Camera username (often admin).")
+    password: str = Field(default="", description="Camera password (empty by default).")
+    port: conint(ge=1, le=65535) = Field(
+        default=554, description="RTSP port, typically 554 on EseeCam devices."
+    )
+    channel: conint(ge=1, le=32) = Field(
+        default=1, description="Channel number (1-based) for NVRs/DVRs."
+    )
+    subtype: conint(ge=0, le=3) = Field(
+        default=0, description="0 = main stream, 1 = sub stream on most firmware."
+    )
+    stream_path: str = Field(
+        default="cam/realmonitor",
+        description="RTSP path before channel/subtype query params.",
+    )
+    mode: Literal["rtsp", "jpeg"] = Field(
+        default="rtsp",
+        description="Use RTSP (default) or snapshot-only JPEG mode.",
+    )
+    http_port: conint(ge=1, le=65535) = Field(
+        default=80, description="HTTP port for snapshot fallback."
+    )
+    snapshot_path: str = Field(
+        default="/webcapture.jpg?command=snap&channel={channel}",
+        description="Path used when fetching JPEG snapshots; {channel}/{subtype} placeholders supported.",
+    )
+    fallback_to_snapshot: bool = Field(
+        default=True,
+        description="If RTSP probe fails, attempt a JPEG snapshot URL instead.",
+    )
+    timeout_seconds: confloat(ge=0.1, le=5.0) = Field(
+        default=1.5, description="Timeout for probing RTSP or HTTP endpoints."
+    )
+
+
 class GeeniLightRequest(BaseModel):
     device_id: str = Field(..., description="Tuya/Geeni device ID for the bulb.")
     local_key: str = Field(..., description="Local key for LAN control.")
