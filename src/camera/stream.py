@@ -22,6 +22,7 @@ from typing import Optional
 
 import cv2
 import numpy as np
+import requests
 
 from src.config import get_settings
 from src.detection import detector as det_module
@@ -118,6 +119,8 @@ class CameraStream:
 
     def _open_capture(self) -> Optional[cv2.VideoCapture]:
         src = self.source
+        if isinstance(src, str) and src.startswith("snapshot+"):
+            return SnapshotCapture(src.replace("snapshot+", "", 1))
         # Allow integer USB camera index as string, e.g. "0"
         if src.isdigit():
             src = int(src)
@@ -207,3 +210,33 @@ class CameraStream:
         except Exception as exc:
             logger.error("Snapshot save failed: %s", exc)
             return None
+
+
+class SnapshotCapture:
+    """Lightweight adapter that mimics cv2.VideoCapture for JPEG snapshots."""
+
+    def __init__(self, url: str, timeout: float = 3.0) -> None:
+        self.url = url
+        self.timeout = timeout
+        self._closed = False
+
+    def isOpened(self) -> bool:  # noqa: N802 (OpenCV-style API)
+        return not self._closed
+
+    def read(self):  # noqa: N802 (OpenCV-style API)
+        if self._closed:
+            return False, None
+        try:
+            res = requests.get(self.url, timeout=self.timeout)
+            res.raise_for_status()
+            arr = np.frombuffer(res.content, dtype=np.uint8)
+            frame = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            return (frame is not None), frame
+        except Exception:
+            return False, None
+
+    def set(self, *_args, **_kwargs):  # noqa: N802 (OpenCV-style API)
+        return False
+
+    def release(self):  # noqa: N802 (OpenCV-style API)
+        self._closed = True

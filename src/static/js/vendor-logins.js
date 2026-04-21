@@ -1,8 +1,10 @@
-/* ── Shared vendor login helpers (Zmodo + Blink) ─────────────────────── */
+/* ── Shared vendor login helpers (Zmodo + Blink + Geeni) ─────────────── */
 
 function initVendorLogins(config = {}) {
-  const busy = { zmodo: false, blink: false };
-  const { zmodo = {}, blink = {}, onResults, onError, onSuccess, onStatus } = config;
+  const busy = { zmodo: false, blink: false, geeni: false, geeniLight: false };
+  const { zmodo = {}, blink = {}, geeni = {}, onResults, onError, onSuccess, onStatus } = config;
+  const geeniCam = geeni.camera || {};
+  const geeniLight = geeni.light || {};
 
   const notify = (msg, type = 'info') => {
     if (typeof toast === 'function') toast(msg, type);
@@ -12,7 +14,11 @@ function initVendorLogins(config = {}) {
   const getEl = ref => (typeof ref === 'string' ? document.querySelector(ref) : ref) || null;
   const getVal = ref => getEl(ref)?.value?.trim();
   const setStatus = (vendor, text) => {
-    const statusEl = vendor === 'zmodo' ? getEl(zmodo.status) : getEl(blink.status);
+    let statusEl = null;
+    if (vendor === 'zmodo') statusEl = getEl(zmodo.status);
+    else if (vendor === 'blink') statusEl = getEl(blink.status);
+    else if (vendor === 'geeni') statusEl = getEl(geeniCam.status);
+    else if (vendor === 'geeniLight') statusEl = getEl(geeniLight.status);
     if (statusEl) statusEl.textContent = text;
     if (typeof onStatus === 'function') onStatus(vendor, text);
   };
@@ -25,6 +31,8 @@ function initVendorLogins(config = {}) {
     const port = parseInt(getVal(zmodo.port) || '10554', 10) || 10554;
     const channel = parseInt(getVal(zmodo.channel) || '0', 10) || 0;
     const transport = getVal(zmodo.transport) || 'tcp';
+    const httpPort = parseInt(getVal(zmodo.httpPort) || '80', 10) || 80;
+    const preferSnapshot = Boolean(getEl(zmodo.snapshot)?.checked);
 
     if (!host || !user || !pass) {
       notify('Zmodo host, user, and password are required.', 'error');
@@ -33,7 +41,17 @@ function initVendorLogins(config = {}) {
 
     busy.zmodo = true;
     setStatus('zmodo', 'Contacting Zmodo…');
-    const body = { host, username: user, password: pass, port, channel, transport };
+    const body = {
+      host,
+      username: user,
+      password: pass,
+      port,
+      channel,
+      transport,
+      http_port: httpPort,
+      mode: preferSnapshot ? 'jpeg' : 'rtsp',
+      fallback_to_snapshot: true,
+    };
 
     try {
       const res = await API.post('/api/cameras/zmodo/login', body);
@@ -85,14 +103,104 @@ function initVendorLogins(config = {}) {
     }
   }
 
+  async function loginGeeniCamera() {
+    if (busy.geeni) return;
+    const host = getVal(geeniCam.host);
+    const user = getVal(geeniCam.user) || 'admin';
+    const pass = getEl(geeniCam.pass)?.value ?? '';
+    const port = parseInt(getVal(geeniCam.port) || '554', 10) || 554;
+    const httpPort = parseInt(getVal(geeniCam.httpPort) || '80', 10) || 80;
+    const streamPath = getVal(geeniCam.path) || 'live/main';
+    const preferSnapshot = Boolean(getEl(geeniCam.snapshot)?.checked);
+
+    if (!host) {
+      notify('Geeni host/IP is required.', 'error');
+      return;
+    }
+
+    busy.geeni = true;
+    setStatus('geeni', 'Contacting Geeni…');
+    const body = {
+      host,
+      username: user,
+      password: pass,
+      port,
+      stream_path: streamPath,
+      http_port: httpPort,
+      mode: preferSnapshot ? 'jpeg' : 'rtsp',
+      fallback_to_snapshot: true,
+    };
+
+    try {
+      const res = await API.post('/api/geeni/cameras/login', body);
+      if (onResults) onResults(res || []);
+      const label = res?.length
+        ? `Added ${res.length} Geeni stream${res.length === 1 ? '' : 's'}.`
+        : 'No Geeni streams returned.';
+      setStatus('geeni', label);
+      if (onSuccess) onSuccess('geeni', label);
+    } catch (e) {
+      setStatus('geeni', 'Login failed. Check IP/credentials and retry.');
+      if (onError) onError('geeni', e.message || 'Login failed');
+      else notify('Geeni login failed: ' + e.message, 'error');
+    } finally {
+      busy.geeni = false;
+    }
+  }
+
+  async function toggleGeeniLight() {
+    if (busy.geeniLight) return;
+    const deviceId = getVal(geeniLight.deviceId);
+    const localKey = getVal(geeniLight.localKey);
+    const ip = getVal(geeniLight.ip);
+    const on = getEl(geeniLight.state)?.checked ?? true;
+    const brightness = parseInt(getVal(geeniLight.brightness) || '0', 10) || null;
+    const protocolVersion = getVal(geeniLight.protocol) || '3.3';
+
+    if (!deviceId || !localKey || !ip) {
+      notify('Geeni light Device ID, Local Key, and IP are required.', 'error');
+      return;
+    }
+
+    busy.geeniLight = true;
+    setStatus('geeniLight', 'Sending command to light…');
+    const body = {
+      device_id: deviceId,
+      local_key: localKey,
+      ip,
+      state: on,
+      protocol_version: protocolVersion,
+    };
+    if (brightness && brightness > 0) body.brightness = brightness;
+
+    try {
+      const res = await API.post('/api/geeni/lights/toggle', body);
+      const label = res?.ok ? 'Light updated.' : 'Light command sent.';
+      setStatus('geeniLight', label);
+      if (onSuccess) onSuccess('geeniLight', label);
+    } catch (e) {
+      setStatus('geeniLight', 'Light command failed.');
+      if (onError) onError('geeniLight', e.message || 'Command failed');
+      else notify('Geeni light error: ' + e.message, 'error');
+    } finally {
+      busy.geeniLight = false;
+    }
+  }
+
   const zButton = getEl(zmodo.button);
   const bButton = getEl(blink.button);
+  const gButton = getEl(geeniCam.button);
+  const glButton = getEl(geeniLight.button);
   if (zButton) zButton.addEventListener('click', loginZmodo);
   if (bButton) bButton.addEventListener('click', loginBlink);
+  if (gButton) gButton.addEventListener('click', loginGeeniCamera);
+  if (glButton) glButton.addEventListener('click', toggleGeeniLight);
 
   // Initialize statuses to Ready when present
   if (getEl(zmodo.status)) setStatus('zmodo', 'Ready.');
   if (getEl(blink.status)) setStatus('blink', 'Ready.');
+  if (getEl(geeniCam.status)) setStatus('geeni', 'Ready.');
+  if (getEl(geeniLight.status)) setStatus('geeniLight', 'Ready.');
 
-  return { loginZmodo, loginBlink };
+  return { loginZmodo, loginBlink, loginGeeniCamera, toggleGeeniLight };
 }

@@ -177,6 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
       port: '#zmodo-port-main',
       channel: '#zmodo-channel-main',
       transport: '#zmodo-transport-main',
+      httpPort: '#zmodo-http-port-main',
+      snapshot: '#zmodo-snapshot-main',
       status: '#zmodo-status-main',
       button: '#btn-zmodo-login-main',
     },
@@ -187,16 +189,39 @@ document.addEventListener('DOMContentLoaded', () => {
       status: '#blink-status-main',
       button: '#btn-blink-login-main',
     },
+    geeni: {
+      camera: {
+        host: '#geeni-host-main',
+        user: '#geeni-user-main',
+        pass: '#geeni-pass-main',
+        port: '#geeni-port-main',
+        httpPort: '#geeni-http-port-main',
+        path: '#geeni-path-main',
+        snapshot: '#geeni-snapshot-main',
+        status: '#geeni-status-main',
+        button: '#btn-geeni-login-main',
+      },
+      light: {
+        deviceId: '#geeni-light-id-main',
+        localKey: '#geeni-light-key-main',
+        ip: '#geeni-light-ip-main',
+        state: '#geeni-light-state-main',
+        brightness: '#geeni-light-brightness-main',
+        protocol: '#geeni-light-protocol-main',
+        status: '#geeni-light-status-main',
+        button: '#btn-geeni-light-main',
+      },
+    },
     onResults: streams => {
       vendorStreams = Array.isArray(streams) ? streams : [];
       renderVendorStreams();
     },
     onError: (vendor, msg) => {
-      const name = vendor === 'zmodo' ? 'Zmodo' : 'Blink';
+      const name = vendor === 'zmodo' ? 'Zmodo' : vendor === 'blink' ? 'Blink' : 'Geeni';
       toast(`${name} login failed: ${msg}`, 'error');
     },
     onSuccess: (vendor, msg) => {
-      const name = vendor === 'zmodo' ? 'Zmodo' : 'Blink';
+      const name = vendor === 'zmodo' ? 'Zmodo' : vendor === 'blink' ? 'Blink' : 'Geeni';
       toast(`${name}: ${msg}`, 'success');
     },
   });

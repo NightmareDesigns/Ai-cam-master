@@ -14,7 +14,7 @@
 | Feature | Description |
 |---|---|
 | 📷 **Multi-camera support** | RTSP streams, USB webcams, HTTP MJPEG — add unlimited cameras |
-| 🔑 **Vendor logins** | Built-in helpers for Zmodo and Blink (with LAN discovery + RTSP liveview) |
+| 🔑 **Vendor logins** | Built-in helpers for Zmodo, Geeni/Tuya, and Blink (with LAN discovery + RTSP or snapshot liveview) |
 | 🤖 **AI Object Detection** | YOLOv8 real-time detection of persons, vehicles, animals, and 80+ COCO classes |
 | 🏃 **Motion Detection** | Background-subtraction motion detection (no AI needed) |
 | 📡 **Live Streaming** | MJPEG HTTP stream + WebSocket binary frames per camera |

@@ -13,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 
 from src.api.alerts import router as alerts_router
 from src.api.cameras import router as cameras_router
+from src.api.geeni import router as geeni_router
 from src.api.events import router as events_router
 from src.api.stream import router as stream_router
 from src.camera.manager import camera_manager
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
 
     # API routers
     app.include_router(cameras_router)
+    app.include_router(geeni_router)
     app.include_router(events_router)
     app.include_router(alerts_router)
     app.include_router(stream_router)
