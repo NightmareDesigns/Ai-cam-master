@@ -41,7 +41,7 @@
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <h2>Vendor Logins</h2>
-    <span class="text-muted" style="font-size:0.9rem">Pull streams from Zmodo, Blink, or Geeni without leaving the main page.</span>
+    <span class="text-muted" style="font-size:0.9rem">Pull streams from Zmodo, Blink, EseeCam, or Geeni without leaving the main page.</span>
   </div>
   <div class="vendor-grid">
     <div class="vendor-panel">
@@ -95,6 +95,50 @@
         <button id="btn-blink-login-main" class="btn btn-primary btn-sm" style="margin-left:8px">Login</button>
       </div>
       <div id="blink-status-main" class="vendor-status">Ready.</div>
+    </div>
+
+    <div class="vendor-panel">
+      <h3>🎥 EseeCam</h3>
+      <small>EseeCloud/EseeCam RTSP builder with snapshot fallback.</small>
+      <div class="form-group form-inline" style="margin-top:10px">
+        <div class="inline-inputs">
+          <label>Host/IP</label>
+          <input type="text" id="eesee-host-main" placeholder="192.168.1.60"/>
+          <label>User</label>
+          <input type="text" id="eesee-user-main" value="admin"/>
+          <label>Pass</label>
+          <input type="password" id="eesee-pass-main" placeholder="password"/>
+        </div>
+      </div>
+      <div class="form-group form-inline">
+        <div class="inline-inputs">
+          <label>RTSP</label>
+          <input type="number" id="eesee-port-main" value="554" min="1" max="65535" step="1" style="width:90px"/>
+          <label>Channel</label>
+          <input type="number" id="eesee-channel-main" value="1" min="1" max="32" step="1" style="width:80px"/>
+          <label>Substream</label>
+          <select id="eesee-subtype-main" style="width:120px">
+            <option value="0" selected>Main (0)</option>
+            <option value="1">Sub (1)</option>
+          </select>
+          <label>Path</label>
+          <input type="text" id="eesee-path-main" value="cam/realmonitor" style="width:150px"/>
+        </div>
+      </div>
+      <div class="form-group form-inline">
+        <div class="inline-inputs">
+          <label>HTTP</label>
+          <input type="number" id="eesee-http-port-main" value="80" min="1" max="65535" step="1" style="width:90px"/>
+          <label>Snapshot path</label>
+          <input type="text" id="eesee-snapshot-path-main" value="/webcapture.jpg?command=snap&amp;channel={channel}" style="width:230px"/>
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="eesee-snapshot-main"/>
+            Snapshot mode
+          </label>
+        </div>
+        <button id="btn-eesee-login-main" class="btn btn-primary btn-sm" style="margin-left:8px">Login</button>
+      </div>
+      <div id="eesee-status-main" class="vendor-status">Ready.</div>
     </div>
 
     <div class="vendor-panel">

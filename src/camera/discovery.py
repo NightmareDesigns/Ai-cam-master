@@ -25,7 +25,7 @@ import psutil
 
 logger = logging.getLogger(__name__)
 
-DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni"]
+DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni", "eeseecam"]
 
 _RTSP_PORTS = (554, 8554, 10554, 7447)
 _HTTP_PORTS = (80, 8000, 8080, 8888)
