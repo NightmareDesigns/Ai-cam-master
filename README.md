@@ -188,9 +188,22 @@ Source: http://192.168.1.100:8080/video
 ```
 
 ### Auto-discover (LAN + USB)
-- In the **Cameras** page, click **Auto-discover** to scan local subnets (RTSP/HTTP ports) and USB webcams.
+- In the **Cameras** page, click **Auto-discover** to scan local subnets and find IP cameras automatically.
 - Provide optional subnets (e.g. `192.168.1.0/24`) or leave blank to scan active interfaces.
 - Results can be added directly or used as a starting point for manual configuration.
+
+**Discovery methods:**
+- **USB webcams**: Probes local USB indexes (0-5)
+- **RTSP scanning**: Expanded port coverage (554, 8554, 10554, 7447, 88, 5000, 37777, 34567, 9000)
+- **HTTP scanning**: Expanded port coverage (80, 81, 82, 85, 8000, 8080, 8081, 8888, 9000, 10000)
+- **ONVIF/WS-Discovery**: Industry-standard IP camera protocol with device information retrieval
+- **UPnP/mDNS/Bonjour**: Zero-configuration networking for consumer cameras and IoT devices
+
+The enhanced discovery system can now find cameras from major manufacturers including:
+- Axis, Hikvision, Dahua, Reolink, Amcrest
+- Wyze, Ring, Arlo, Nest (local modes)
+- Generic ONVIF-compliant cameras
+- And many more...
 
 ---
 
