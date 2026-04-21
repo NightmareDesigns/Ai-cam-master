@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
+from blinkpy.auth import BlinkTwoFARequiredError
 
 
 # ── Camera endpoints ─────────────────────────────────────────────────────────
@@ -58,6 +59,56 @@ class TestCamerasAPI:
         assert r2.status_code == 204
         r3 = client.get(f"/api/cameras/{cam_id}")
         assert r3.status_code == 404
+
+
+class TestVendorIntegrations:
+    def test_zmodo_login_uses_helper(self, monkeypatch, client: TestClient):
+        captured = {}
+
+        async def fake_build(payload):
+            captured["payload"] = payload
+            return [{"source": "rtsp://u:p@10.0.0.5:10554/tcp/av0_0", "label": "Zmodo", "type": "zmodo"}]
+
+        monkeypatch.setattr("src.api.cameras.build_zmodo_stream", fake_build)
+
+        r = client.post(
+            "/api/cameras/zmodo/login",
+            json={
+                "host": "10.0.0.5",
+                "username": "user",
+                "password": "pass",
+                "channel": 1,
+                "port": 10554,
+                "transport": "tcp",
+            },
+        )
+        assert r.status_code == 200
+        assert captured["payload"].host == "10.0.0.5"
+        assert r.json()[0]["type"] == "zmodo"
+
+    def test_blink_login_requires_twofa(self, monkeypatch, client: TestClient):
+        async def fake_fetch(payload):
+            raise BlinkTwoFARequiredError
+
+        monkeypatch.setattr("src.api.cameras.fetch_blink_liveviews", fake_fetch)
+        r = client.post(
+            "/api/cameras/blink/login",
+            json={"username": "user@example.com", "password": "secret"},
+        )
+        assert r.status_code == 401
+        assert "Two-factor" in r.json()["detail"]
+
+    def test_blink_login_success(self, monkeypatch, client: TestClient):
+        async def fake_fetch(payload):
+            return [{"source": "rtsps://example/live", "label": "Blink Cam", "type": "blink"}]
+
+        monkeypatch.setattr("src.api.cameras.fetch_blink_liveviews", fake_fetch)
+        r = client.post(
+            "/api/cameras/blink/login",
+            json={"username": "user@example.com", "password": "secret", "two_factor_code": "123456"},
+        )
+        assert r.status_code == 200
+        assert r.json()[0]["type"] == "blink"
 
 
 # ── Events endpoints ─────────────────────────────────────────────────────────

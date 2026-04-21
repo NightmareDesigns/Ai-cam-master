@@ -3,6 +3,7 @@
 let cameras = [];
 let discoveries = [];
 let discovering = false;
+let vendorBusy = { zmodo: false, blink: false };
 
 async function loadCameras() {
   try {
@@ -151,10 +152,24 @@ function renderDiscoveryResults() {
     .join('');
 }
 
+function mergeDiscoveries(newOnes = []) {
+  const seen = new Set(discoveries.map(d => d.source));
+  newOnes.forEach(d => {
+    if (!d || !d.source || seen.has(d.source)) return;
+    discoveries.push(d);
+    seen.add(d.source);
+  });
+  renderDiscoveryResults();
+}
+
 function openDiscover() {
   discoveries = [];
   renderDiscoveryResults();
   setDiscoveryStatus('Ready to scan.');
+  const zmodoStatus = document.getElementById('zmodo-status');
+  const blinkStatus = document.getElementById('blink-status');
+  if (zmodoStatus) zmodoStatus.textContent = 'Ready.';
+  if (blinkStatus) blinkStatus.textContent = 'Ready.';
   const modal = document.getElementById('discovery-modal');
   if (modal) modal.classList.add('open');
 }
@@ -175,13 +190,14 @@ async function runDiscovery() {
   setDiscoveryStatus('Scanning…');
   const subnetsInput = document.getElementById('discover-subnets')?.value || '';
   const subnets = subnetsInput
-    .split(/[,\\n\\s]+/)
+    .split(/[,\n\s]+/)
     .map(s => s.trim())
     .filter(Boolean);
   const body = {
     include_usb: document.getElementById('discover-include-usb')?.checked ?? true,
     timeout_seconds: parseFloat(document.getElementById('discover-timeout')?.value || '0.75') || 0.75,
     max_results: parseInt(document.getElementById('discover-max-results')?.value || '25', 10) || 25,
+    max_hosts: parseInt(document.getElementById('discover-max-hosts')?.value || '256', 10) || 256,
   };
   if (subnets.length) body.subnets = subnets;
   try {
@@ -193,6 +209,74 @@ async function runDiscovery() {
     setDiscoveryStatus('Discovery failed. Adjust subnets or timeout and retry.');
   } finally {
     discovering = false;
+  }
+}
+
+async function loginZmodo() {
+  if (vendorBusy.zmodo) return;
+  const host = document.getElementById('zmodo-host')?.value.trim();
+  const user = document.getElementById('zmodo-user')?.value.trim();
+  const pass = document.getElementById('zmodo-pass')?.value ?? '';
+  const port = parseInt(document.getElementById('zmodo-port')?.value || '10554', 10) || 10554;
+  const channel = parseInt(document.getElementById('zmodo-channel')?.value || '0', 10) || 0;
+  const transport = document.getElementById('zmodo-transport')?.value || 'tcp';
+  const statusEl = document.getElementById('zmodo-status');
+
+  if (!host || !user || !pass) {
+    toast('Zmodo host, user, and password are required.', 'error');
+    return;
+  }
+  vendorBusy.zmodo = true;
+  if (statusEl) statusEl.textContent = 'Contacting Zmodo…';
+
+  const body = {
+    host,
+    username: user,
+    password: pass,
+    port,
+    channel,
+    transport,
+  };
+
+  try {
+    const res = await API.post('/api/cameras/zmodo/login', body);
+    mergeDiscoveries(res || []);
+    const label = res?.length ? `Added ${res.length} stream${res.length === 1 ? '' : 's'}.` : 'No streams returned.';
+    if (statusEl) statusEl.textContent = label;
+  } catch (e) {
+    toast('Zmodo login failed: ' + e.message, 'error');
+    if (statusEl) statusEl.textContent = 'Login failed. Check credentials/IP and retry.';
+  } finally {
+    vendorBusy.zmodo = false;
+  }
+}
+
+async function loginBlink() {
+  if (vendorBusy.blink) return;
+  const username = document.getElementById('blink-user')?.value.trim();
+  const password = document.getElementById('blink-pass')?.value ?? '';
+  const twofa = document.getElementById('blink-otp')?.value.trim() || null;
+  const statusEl = document.getElementById('blink-status');
+  if (!username || !password) {
+    toast('Blink email and password are required.', 'error');
+    return;
+  }
+  vendorBusy.blink = true;
+  if (statusEl) statusEl.textContent = 'Logging in to Blink…';
+
+  const body = { username, password };
+  if (twofa) body.two_factor_code = twofa;
+
+  try {
+    const res = await API.post('/api/cameras/blink/login', body);
+    mergeDiscoveries(res || []);
+    const label = res?.length ? `Fetched ${res.length} Blink camera${res.length === 1 ? '' : 's'}.` : 'No Blink cameras returned.';
+    if (statusEl) statusEl.textContent = label;
+  } catch (e) {
+    toast('Blink login failed: ' + e.message, 'error');
+    if (statusEl) statusEl.textContent = 'Login failed. Check credentials/2FA.';
+  } finally {
+    vendorBusy.blink = false;
   }
 }
 
@@ -214,4 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-discover').addEventListener('click', openDiscover);
   document.getElementById('btn-close-discover').addEventListener('click', closeDiscover);
   document.getElementById('btn-run-discover').addEventListener('click', runDiscovery);
+  document.getElementById('btn-zmodo-login').addEventListener('click', loginZmodo);
+  document.getElementById('btn-blink-login').addEventListener('click', loginBlink);
 });

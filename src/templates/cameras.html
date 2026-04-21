@@ -108,8 +108,57 @@
         <input type="number" id="discover-timeout" value="0.75" min="0.1" max="5" step="0.05"/>
         <label>Max results</label>
         <input type="number" id="discover-max-results" value="25" min="1" max="200" step="1"/>
+        <label>Max hosts</label>
+        <input type="number" id="discover-max-hosts" value="256" min="1" max="2048" step="1"/>
       </div>
     </div>
+
+    <hr/>
+
+    <h3 style="margin:12px 0 6px 0">Zmodo login</h3>
+    <p class="text-muted" style="margin-top:0">Build and validate RTSP URLs for Zmodo cameras (default port 10554).</p>
+    <div class="form-group form-inline">
+      <div class="inline-inputs">
+        <label>Host/IP</label>
+        <input type="text" id="zmodo-host" placeholder="192.168.1.50"/>
+        <label>User</label>
+        <input type="text" id="zmodo-user" placeholder="admin"/>
+        <label>Pass</label>
+        <input type="password" id="zmodo-pass" placeholder="password"/>
+      </div>
+    </div>
+    <div class="form-group form-inline">
+      <div class="inline-inputs">
+        <label>Port</label>
+        <input type="number" id="zmodo-port" value="10554" min="1" max="65535" step="1"/>
+        <label>Channel</label>
+        <input type="number" id="zmodo-channel" value="0" min="0" max="8" step="1"/>
+        <label>Transport</label>
+        <select id="zmodo-transport">
+          <option value="tcp" selected>TCP</option>
+          <option value="udp">UDP</option>
+        </select>
+      </div>
+      <button id="btn-zmodo-login" class="btn btn-accent btn-sm" style="margin-left:8px">Login to Zmodo</button>
+    </div>
+    <div id="zmodo-status" class="text-muted" style="margin-top:-4px;margin-bottom:8px">Ready.</div>
+
+    <hr/>
+
+    <h3 style="margin:12px 0 6px 0">Blink login</h3>
+    <p class="text-muted" style="margin-top:0">Fetch liveview RTSP URLs from your Blink account (supports 2FA).</p>
+    <div class="form-group form-inline">
+      <div class="inline-inputs">
+        <label>Email</label>
+        <input type="text" id="blink-user" placeholder="you@example.com"/>
+        <label>Password</label>
+        <input type="password" id="blink-pass" placeholder="••••••••"/>
+        <label>2FA</label>
+        <input type="text" id="blink-otp" placeholder="123456"/>
+      </div>
+      <button id="btn-blink-login" class="btn btn-primary btn-sm" style="margin-left:8px">Login to Blink</button>
+    </div>
+    <div id="blink-status" class="text-muted" style="margin-top:-4px;margin-bottom:8px">Ready.</div>
 
     <div id="discover-status" class="text-muted" style="margin: 12px 0">Ready to scan.</div>
     <div id="discover-results" class="discovery-list">
