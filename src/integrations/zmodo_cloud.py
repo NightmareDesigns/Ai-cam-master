@@ -88,6 +88,9 @@ class ZmodoCloudClient:
                         if "endpoint" in str(error_msg).lower():
                             # Try next endpoint
                             continue
+                        # Check if captcha is required
+                        if "captcha" in str(error_msg).lower() or "验证码" in str(error_msg):
+                            raise ValueError(f"Zmodo login failed: {error_msg}. Please provide a captcha code.")
                         raise ValueError(f"Zmodo login failed: {error_msg}")
 
                     self.token = data.get("token")
