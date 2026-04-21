@@ -49,11 +49,28 @@ class Settings(BaseSettings):
     alert_email_from: str = ""
     alert_email_to: str = ""
 
+    # Auto-discovery
+    auto_discovery_enabled: bool = True
+    auto_discovery_on_startup: bool = True
+    auto_discovery_brute_force: bool = True
+    auto_discovery_auto_add: bool = True
+    auto_discovery_max_hosts: int = 256
+    auto_discovery_timeout: float = 2.0
+    auto_discovery_interval_hours: int = 24
+    auto_discovery_subnets: str = ""
+
     @property
     def tracked_classes_list(self) -> List[str]:
         if not self.tracked_classes.strip():
             return []
         return [c.strip().lower() for c in self.tracked_classes.split(",") if c.strip()]
+
+    @property
+    def auto_discovery_subnets_list(self) -> List[str]:
+        """Parse comma-separated subnet list."""
+        if not self.auto_discovery_subnets.strip():
+            return []
+        return [s.strip() for s in self.auto_discovery_subnets.split(",") if s.strip()]
 
     def ensure_dirs(self) -> None:
         os.makedirs(self.recordings_dir, exist_ok=True)

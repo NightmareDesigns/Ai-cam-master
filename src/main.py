@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -17,6 +18,7 @@ from src.api.geeni import router as geeni_router
 from src.api.events import router as events_router
 from src.api.stream import router as stream_router
 from src.camera.manager import camera_manager
+from src.camera.auto_discovery import auto_discovery_service
 from src.config import get_settings
 from src.database import SessionLocal, create_tables
 from src.detection import detector as det_module
@@ -39,10 +41,37 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         camera_manager.startup(db)
+
+        # Run auto-discovery on startup if enabled
+        if settings.auto_discovery_enabled and settings.auto_discovery_on_startup:
+            logger.info("Running auto-discovery on startup...")
+            asyncio.create_task(
+                auto_discovery_service.run_discovery(
+                    db=db,
+                    subnets=settings.auto_discovery_subnets_list or None,
+                    enable_brute_force=settings.auto_discovery_brute_force,
+                    auto_add_cameras=settings.auto_discovery_auto_add,
+                    max_hosts=settings.auto_discovery_max_hosts,
+                    timeout=settings.auto_discovery_timeout,
+                )
+            )
+
+        # Start background auto-discovery if enabled with interval
+        if settings.auto_discovery_enabled and settings.auto_discovery_interval_hours > 0:
+            auto_discovery_service.start_background(
+                db=db,
+                subnets=settings.auto_discovery_subnets_list or None,
+                enable_brute_force=settings.auto_discovery_brute_force,
+                auto_add_cameras=settings.auto_discovery_auto_add,
+                max_hosts=settings.auto_discovery_max_hosts,
+                timeout=settings.auto_discovery_timeout,
+                interval_hours=settings.auto_discovery_interval_hours,
+            )
     finally:
         pass  # db kept open for event callbacks
     logger.info("AI-Cam started. Dashboard: http://%s:%d/", settings.host, settings.port)
     yield
+    auto_discovery_service.stop_background()
     camera_manager.shutdown()
     db.close()
 
