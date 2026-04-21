@@ -151,6 +151,26 @@
 
     <hr/>
 
+    <h3 style="margin:12px 0 6px 0">Zmodo Cloud login</h3>
+    <p class="text-muted" style="margin-top:0">Access cameras via Zmodo cloud (user.zmodo.com) — fetches FLV streams.</p>
+    <div class="form-group form-inline">
+      <div class="inline-inputs">
+        <label>Email</label>
+        <input type="text" id="zmodo-cloud-email" placeholder="you@example.com"/>
+        <label>Password</label>
+        <input type="password" id="zmodo-cloud-pass" placeholder="••••••••"/>
+        <label>Quality</label>
+        <select id="zmodo-cloud-quality">
+          <option value="hd" selected>HD (1080p)</option>
+          <option value="sd">SD (480p)</option>
+        </select>
+      </div>
+      <button id="btn-zmodo-cloud-login" class="btn btn-accent btn-sm" style="margin-left:8px">Login to Zmodo Cloud</button>
+    </div>
+    <div id="zmodo-cloud-status" class="text-muted" style="margin-top:-4px;margin-bottom:8px">Ready.</div>
+
+    <hr/>
+
     <h3 style="margin:12px 0 6px 0">EseeCam login</h3>
     <p class="text-muted" style="margin-top:0">EseeCloud/EseeCam RTSP builder with optional snapshot fallback.</p>
     <div class="form-group form-inline">
