@@ -11,13 +11,14 @@ from blinkpy.auth import BlinkTwoFARequiredError, LoginError as BlinkLoginError
 from src.camera import discovery
 from src.integrations.blink import fetch_blink_liveviews
 from src.integrations.zmodo import build_zmodo_stream
+from src.integrations.zmodo_cloud import fetch_zmodo_cloud_cameras
 from src.integrations.eeseecam import build_eeseecam_stream
 from src.camera.manager import camera_manager
 from src.database import get_db
 from src.models.camera import Camera
 from src.schemas.camera import CameraCreate, CameraRead, CameraUpdate
 from src.schemas.discovery import DiscoveredCamera, DiscoveryRequest
-from src.schemas.vendors import BlinkLoginRequest, ZmodoLoginRequest, EseeCamLoginRequest
+from src.schemas.vendors import BlinkLoginRequest, ZmodoLoginRequest, ZmodoCloudLoginRequest, EseeCamLoginRequest
 
 router = APIRouter(prefix="/api/cameras", tags=["cameras"])
 
@@ -103,6 +104,28 @@ async def discover_cameras(payload: DiscoveryRequest):
 async def zmodo_login(payload: ZmodoLoginRequest):
     """Build a Zmodo RTSP URL and optionally validate connectivity."""
     return await build_zmodo_stream(payload)
+
+
+@router.post("/zmodo/cloud/login", response_model=List[DiscoveredCamera])
+async def zmodo_cloud_login(payload: ZmodoCloudLoginRequest):
+    """Authenticate with Zmodo cloud (user.zmodo.com) and return camera streams."""
+    try:
+        return await fetch_zmodo_cloud_cameras(payload)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        )
+    except ConnectionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Unable to connect to Zmodo cloud: {exc}",
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Zmodo cloud login failed: {exc}",
+        ) from exc
 
 
 @router.post("/blink/login", response_model=List[DiscoveredCamera])
