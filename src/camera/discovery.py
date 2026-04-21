@@ -20,11 +20,12 @@ from typing import Iterable, List, Literal, Optional, Sequence, Set
 from urllib.parse import urlparse
 
 import cv2
+import httpx
 import psutil
 
 logger = logging.getLogger(__name__)
 
-DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink"]
+DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni"]
 
 _RTSP_PORTS = (554, 8554, 10554, 7447)
 _HTTP_PORTS = (80, 8000, 8080, 8888)
@@ -278,6 +279,22 @@ async def probe_rtsp_url(url: str, timeout: float) -> Optional[str]:
         writer.close()
         with contextlib.suppress(Exception):
             await writer.wait_closed()
+
+
+async def probe_snapshot_url(url: str, timeout: float) -> Optional[str]:
+    """Fetch a single JPEG snapshot and return evidence when reachable."""
+    try:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            res = await client.get(url)
+    except Exception:
+        return None
+
+    if res.status_code >= 400:
+        return None
+    ctype = res.headers.get("content-type", "").lower()
+    if "image" in ctype:
+        return f"HTTP {res.status_code} {ctype}"
+    return f"HTTP {res.status_code} {len(res.content)} bytes"
 
 
 async def discover_cameras(

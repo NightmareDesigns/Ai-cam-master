@@ -110,6 +110,47 @@ class TestVendorIntegrations:
         assert r.status_code == 200
         assert r.json()[0]["type"] == "blink"
 
+    def test_geeni_camera_login(self, monkeypatch, client: TestClient):
+        captured = {}
+
+        async def fake_build(payload):
+            captured["payload"] = payload
+            return [{"source": "rtsp://admin:pass@10.0.0.9/live/main", "label": "Geeni", "type": "geeni"}]
+
+        monkeypatch.setattr("src.api.geeni.build_geeni_stream", fake_build)
+
+        r = client.post(
+            "/api/geeni/cameras/login",
+            json={
+                "host": "10.0.0.9",
+                "username": "admin",
+                "password": "pass",
+                "stream_path": "live/main",
+                "port": 554,
+            },
+        )
+        assert r.status_code == 200
+        assert captured["payload"].host == "10.0.0.9"
+        assert r.json()[0]["type"] == "geeni"
+
+    def test_geeni_light_toggle(self, monkeypatch, client: TestClient):
+        async def fake_control(payload):
+            return {"device_id": payload.device_id, "on": payload.state}
+
+        monkeypatch.setattr("src.api.geeni.control_geeni_light", fake_control)
+
+        r = client.post(
+            "/api/geeni/lights/toggle",
+            json={
+                "device_id": "abc123",
+                "local_key": "key123",
+                "ip": "10.0.0.15",
+                "state": True,
+            },
+        )
+        assert r.status_code == 200
+        assert r.json()["ok"] is True
+
 
 # ── Events endpoints ─────────────────────────────────────────────────────────
 

@@ -30,7 +30,7 @@ class DiscoveryRequest(BaseModel):
 class DiscoveredCamera(BaseModel):
     source: str
     label: str
-    type: Literal["usb", "rtsp", "http", "zmodo", "blink"]
+    type: Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni"]
     ip: Optional[str] = None
     port: Optional[int] = None
     evidence: Optional[str] = None

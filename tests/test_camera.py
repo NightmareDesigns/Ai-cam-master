@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import cv2
 import numpy as np
 import pytest
 
@@ -61,6 +62,30 @@ class TestCameraStream:
         with patch("src.camera.stream.Path.mkdir", side_effect=PermissionError("denied")):
             result = stream._save_snapshot(np.zeros((10, 10, 3), dtype=np.uint8), "test")
         assert result is None
+
+    def test_snapshot_capture_reads_frame(self, monkeypatch):
+        from src.camera.stream import SnapshotCapture
+
+        frame = np.zeros((4, 4, 3), dtype=np.uint8)
+        ok, buf = cv2.imencode(".jpg", frame)
+        assert ok
+
+        class DummyResponse:
+            def __init__(self, content):
+                self.content = content
+
+            def raise_for_status(self):
+                return None
+
+        monkeypatch.setattr(
+            "src.camera.stream.requests.get", lambda url, timeout=3.0: DummyResponse(buf.tobytes())
+        )
+
+        cap = SnapshotCapture("http://example/snapshot.jpg")
+        assert cap.isOpened()
+        ok, decoded = cap.read()
+        assert ok is True
+        assert decoded is not None
 
 
 # ── AlertManager ─────────────────────────────────────────────────────────────

@@ -41,12 +41,12 @@
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <h2>Vendor Logins</h2>
-    <span class="text-muted" style="font-size:0.9rem">Pull RTSP streams from Zmodo or Blink without leaving the main page.</span>
+    <span class="text-muted" style="font-size:0.9rem">Pull streams from Zmodo, Blink, or Geeni without leaving the main page.</span>
   </div>
   <div class="vendor-grid">
     <div class="vendor-panel">
       <h3>🛡️ Zmodo</h3>
-      <small>Build and validate RTSP URLs (default port 10554).</small>
+      <small>Build RTSP URLs or switch to snapshot mode when RTSP is locked.</small>
       <div class="form-group form-inline" style="margin-top:10px">
         <div class="inline-inputs">
           <label>Host/IP</label>
@@ -68,6 +68,12 @@
             <option value="tcp" selected>TCP</option>
             <option value="udp">UDP</option>
           </select>
+          <label>HTTP</label>
+          <input type="number" id="zmodo-http-port-main" value="80" min="1" max="65535" step="1" style="width:100px"/>
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="zmodo-snapshot-main"/>
+            Snapshot mode
+          </label>
         </div>
         <button id="btn-zmodo-login-main" class="btn btn-accent btn-sm" style="margin-left:8px">Login</button>
       </div>
@@ -89,6 +95,62 @@
         <button id="btn-blink-login-main" class="btn btn-primary btn-sm" style="margin-left:8px">Login</button>
       </div>
       <div id="blink-status-main" class="vendor-status">Ready.</div>
+    </div>
+
+    <div class="vendor-panel">
+      <h3>💡 Geeni</h3>
+      <small>Tuya-based Geeni cameras (RTSP or snapshot) and LAN lights.</small>
+      <div class="form-group form-inline" style="margin-top:10px">
+        <div class="inline-inputs">
+          <label>Host/IP</label>
+          <input type="text" id="geeni-host-main" placeholder="192.168.1.88"/>
+          <label>User</label>
+          <input type="text" id="geeni-user-main" value="admin"/>
+          <label>Pass</label>
+          <input type="password" id="geeni-pass-main" placeholder="optional"/>
+        </div>
+      </div>
+      <div class="form-group form-inline">
+        <div class="inline-inputs">
+          <label>RTSP</label>
+          <input type="number" id="geeni-port-main" value="554" min="1" max="65535" step="1" style="width:90px"/>
+          <label>HTTP</label>
+          <input type="number" id="geeni-http-port-main" value="80" min="1" max="65535" step="1" style="width:90px"/>
+          <label>Path</label>
+          <input type="text" id="geeni-path-main" value="live/main" style="width:140px"/>
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="geeni-snapshot-main"/>
+            Snapshot mode
+          </label>
+        </div>
+        <button id="btn-geeni-login-main" class="btn btn-primary btn-sm" style="margin-left:8px">Login</button>
+      </div>
+      <div id="geeni-status-main" class="vendor-status">Ready.</div>
+
+      <div class="form-group form-inline" style="margin-top:12px">
+        <div class="inline-inputs">
+          <label>Light ID</label>
+          <input type="text" id="geeni-light-id-main" placeholder="device id" style="width:140px"/>
+          <label>Local Key</label>
+          <input type="text" id="geeni-light-key-main" placeholder="local key" style="width:140px"/>
+          <label>IP</label>
+          <input type="text" id="geeni-light-ip-main" placeholder="192.168.1.120" style="width:140px"/>
+        </div>
+      </div>
+      <div class="form-group form-inline" style="margin-top:6px">
+        <div class="inline-inputs">
+          <label>Brightness</label>
+          <input type="number" id="geeni-light-brightness-main" placeholder="1-100" min="1" max="100" step="1" style="width:110px"/>
+          <label>Protocol</label>
+          <input type="text" id="geeni-light-protocol-main" value="3.3" style="width:80px"/>
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="geeni-light-state-main" checked/>
+            Turn on
+          </label>
+        </div>
+        <button id="btn-geeni-light-main" class="btn btn-ghost btn-sm" style="margin-left:8px">Update Light</button>
+      </div>
+      <div id="geeni-light-status-main" class="vendor-status">Ready.</div>
     </div>
   </div>
 
