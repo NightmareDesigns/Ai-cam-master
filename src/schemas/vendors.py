@@ -42,6 +42,9 @@ class ZmodoLoginRequest(BaseModel):
 class ZmodoCloudLoginRequest(BaseModel):
     email: str = Field(..., description="Zmodo account email (for user.zmodo.com login).")
     password: str = Field(..., description="Zmodo account password.")
+    captcha: Optional[str] = Field(
+        default=None, description="Captcha code if required by user.zmodo.com."
+    )
     quality: Literal["sd", "hd"] = Field(
         default="hd", description="Stream quality: 'sd' (480p) or 'hd' (1080p)."
     )
