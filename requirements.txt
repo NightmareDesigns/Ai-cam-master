@@ -35,3 +35,6 @@ tinytuya==1.15.0
 # Camera discovery
 onvif-zeep==0.2.12
 zeroconf==0.136.2
+aiocoap==0.4.11
+paho-mqtt==2.1.0
+aiortc==1.9.0

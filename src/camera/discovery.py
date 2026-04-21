@@ -25,12 +25,15 @@ import psutil
 
 logger = logging.getLogger(__name__)
 
-DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni", "eeseecam", "onvif", "upnp"]
+DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni", "eeseecam", "onvif", "upnp", "rtmp", "webrtc", "mqtt", "sip", "coap", "ssdp"]
 
 # Expanded port lists to cover more camera manufacturers
 _RTSP_PORTS = (554, 8554, 10554, 7447, 88, 5000, 37777, 34567, 9000)
 _HTTP_PORTS = (80, 8000, 8080, 8888, 81, 82, 85, 8081, 9000, 10000)
 _ONVIF_PORTS = (80, 8080, 8899, 5000, 10080)
+_RTMP_PORTS = (1935, 1936, 8935)
+_SIP_PORTS = (5060, 5061)
+_COAP_PORTS = (5683, 5684)
 _MAX_USB_INDEX = 5
 _DEFAULT_TIMEOUT = 1.5  # Increased from 0.75 for better camera detection
 _DEFAULT_MAX_RESULTS = 50  # Increased from 25
@@ -309,8 +312,283 @@ async def _discover_upnp_cameras(timeout: float) -> List[DiscoveredCamera]:
     return discovered
 
 
+async def _probe_rtmp(ip: str, port: int, timeout: float) -> Optional[DiscoveredCamera]:
+    """Probe for RTMP streaming servers."""
+    try:
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(ip, port),
+            timeout=timeout,
+        )
+    except Exception:
+        return None
+
+    try:
+        # RTMP handshake starts with C0+C1 (0x03 + 1536 bytes)
+        # We just check if the port is open and responsive
+        writer.close()
+        await writer.wait_closed()
+        return DiscoveredCamera(
+            source=f"rtmp://{ip}:{port}/live",
+            label=f"RTMP @ {ip}:{port}",
+            type="rtmp",
+            ip=ip,
+            port=port,
+            evidence="RTMP port open",
+        )
+    except Exception:
+        return None
+    finally:
+        with contextlib.suppress(Exception):
+            writer.close()
+            await writer.wait_closed()
+
+
+async def _probe_sip(ip: str, port: int, timeout: float) -> Optional[DiscoveredCamera]:
+    """Probe for SIP/VoIP cameras."""
+    try:
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(ip, port),
+            timeout=timeout,
+        )
+    except Exception:
+        return None
+
+    try:
+        # Send SIP OPTIONS request
+        request = f"OPTIONS sip:{ip}:{port} SIP/2.0\r\nVia: SIP/2.0/TCP {ip}\r\nTo: sip:{ip}\r\nFrom: sip:scanner@localhost\r\nCall-ID: scan123\r\nCSeq: 1 OPTIONS\r\n\r\n".encode()
+        writer.write(request)
+        await writer.drain()
+        data = await asyncio.wait_for(reader.read(256), timeout=timeout)
+        if data and b"SIP" in data:
+            return DiscoveredCamera(
+                source=f"sip://{ip}:{port}",
+                label=f"SIP Camera @ {ip}:{port}",
+                type="sip",
+                ip=ip,
+                port=port,
+                evidence="SIP protocol detected",
+            )
+    except Exception:
+        return None
+    finally:
+        writer.close()
+        with contextlib.suppress(Exception):
+            await writer.wait_closed()
+    return None
+
+
+async def _probe_coap(ip: str, port: int, timeout: float) -> Optional[DiscoveredCamera]:
+    """Probe for CoAP IoT cameras."""
+    try:
+        import aiocoap
+        from aiocoap import Context, Message, GET
+    except ImportError:
+        logger.debug("CoAP support not available (aiocoap not installed)")
+        return None
+
+    try:
+        context = await Context.create_client_context()
+        request = Message(code=GET, uri=f"coap://{ip}:{port}/.well-known/core")
+
+        response = await asyncio.wait_for(
+            context.request(request).response,
+            timeout=timeout
+        )
+
+        if response.payload:
+            return DiscoveredCamera(
+                source=f"coap://{ip}:{port}/",
+                label=f"CoAP Device @ {ip}:{port}",
+                type="coap",
+                ip=ip,
+                port=port,
+                evidence=f"CoAP device discovered",
+            )
+    except Exception:
+        return None
+    finally:
+        with contextlib.suppress(Exception):
+            await context.shutdown()
+    return None
+
+
+async def _discover_mqtt_cameras(timeout: float) -> List[DiscoveredCamera]:
+    """Discover cameras via MQTT (Home Assistant auto-discovery pattern)."""
+    try:
+        import paho.mqtt.client as mqtt
+    except ImportError:
+        logger.debug("MQTT support not available (paho-mqtt not installed)")
+        return []
+
+    discovered: List[DiscoveredCamera] = []
+
+    def on_message(client, userdata, msg):
+        """Callback for MQTT messages."""
+        try:
+            import json
+            payload = json.loads(msg.payload.decode())
+            # Look for camera devices in Home Assistant auto-discovery format
+            if 'device_class' in payload and payload['device_class'] == 'camera':
+                stream_url = payload.get('stream_source') or payload.get('entity_picture')
+                if stream_url:
+                    discovered.append(
+                        DiscoveredCamera(
+                            source=stream_url,
+                            label=f"MQTT Camera: {payload.get('name', 'Unknown')}",
+                            type="mqtt",
+                            evidence=f"MQTT topic: {msg.topic}",
+                        )
+                    )
+        except Exception as exc:
+            logger.debug(f"MQTT message parse error: {exc}")
+
+    # Try common MQTT brokers on localhost and common IPs
+    brokers = ["localhost", "127.0.0.1", "192.168.1.1"]
+
+    for broker in brokers:
+        try:
+            client = mqtt.Client()
+            client.on_message = on_message
+            client.connect(broker, 1883, 60)
+            # Subscribe to Home Assistant auto-discovery topics
+            client.subscribe("homeassistant/camera/#")
+            client.subscribe("camera/#")
+            client.loop_start()
+            await asyncio.sleep(timeout)
+            client.loop_stop()
+            client.disconnect()
+            if discovered:
+                break
+        except Exception:
+            continue
+
+    return discovered
+
+
+async def _discover_webrtc_cameras(timeout: float) -> List[DiscoveredCamera]:
+    """Discover WebRTC-enabled cameras via mDNS."""
+    try:
+        from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
+        from zeroconf.asyncio import AsyncZeroconf
+    except ImportError:
+        logger.debug("WebRTC discovery requires zeroconf")
+        return []
+
+    discovered: List[DiscoveredCamera] = []
+
+    class WebRTCListener(ServiceListener):
+        def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+            info = zc.get_service_info(type_, name)
+            if info:
+                addresses = [socket.inet_ntoa(addr) for addr in info.addresses]
+                for addr in addresses:
+                    # WebRTC cameras often expose signaling servers
+                    discovered.append(
+                        DiscoveredCamera(
+                            source=f"webrtc://{addr}:{info.port}/",
+                            label=f"WebRTC Camera @ {addr}:{info.port}",
+                            type="webrtc",
+                            ip=addr,
+                            port=info.port,
+                            evidence=f"mDNS service: {name}",
+                        )
+                    )
+
+    try:
+        aiozc = AsyncZeroconf()
+        zc = await aiozc.zeroconf
+
+        # WebRTC-related service types
+        service_types = [
+            "_webrtc._tcp.local.",
+            "_webrtc._udp.local.",
+            "_stun._tcp.local.",
+            "_turn._tcp.local.",
+        ]
+
+        browsers = []
+        listener = WebRTCListener()
+
+        for service_type in service_types:
+            browsers.append(ServiceBrowser(zc, service_type, listener))
+
+        await asyncio.sleep(timeout)
+        await aiozc.async_close()
+
+    except Exception as exc:
+        logger.debug(f"WebRTC discovery failed: {exc}")
+
+    return discovered
+
+
+async def _discover_ssdp_cameras(timeout: float) -> List[DiscoveredCamera]:
+    """Enhanced SSDP/UPnP-AV discovery for NVR/DVR systems."""
+    discovered: List[DiscoveredCamera] = []
+
+    # SSDP multicast address
+    SSDP_ADDR = "239.255.255.250"
+    SSDP_PORT = 1900
+
+    # M-SEARCH request for media devices
+    msearch_request = "\r\n".join([
+        "M-SEARCH * HTTP/1.1",
+        f"HOST: {SSDP_ADDR}:{SSDP_PORT}",
+        "MAN: \"ssdp:discover\"",
+        "MX: 2",
+        "ST: urn:schemas-upnp-org:device:MediaServer:1",
+        "",
+        ""
+    ]).encode()
+
+    try:
+        # Create UDP socket for SSDP
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.settimeout(timeout)
+
+        # Send M-SEARCH request
+        sock.sendto(msearch_request, (SSDP_ADDR, SSDP_PORT))
+
+        # Collect responses
+        end_time = asyncio.get_event_loop().time() + timeout
+        while asyncio.get_event_loop().time() < end_time:
+            try:
+                data, addr = sock.recvfrom(2048)
+                response = data.decode(errors='ignore')
+
+                # Parse LOCATION header
+                if 'LOCATION:' in response or 'Location:' in response:
+                    for line in response.split('\n'):
+                        if line.lower().startswith('location:'):
+                            location = line.split(':', 1)[1].strip()
+                            parsed = urlparse(location)
+                            if parsed.hostname:
+                                discovered.append(
+                                    DiscoveredCamera(
+                                        source=f"http://{parsed.hostname}:{parsed.port or 80}/",
+                                        label=f"SSDP Media Device @ {parsed.hostname}",
+                                        type="ssdp",
+                                        ip=parsed.hostname,
+                                        port=parsed.port or 80,
+                                        evidence="UPnP MediaServer discovered",
+                                    )
+                                )
+                            break
+                await asyncio.sleep(0.1)
+            except socket.timeout:
+                break
+            except Exception:
+                continue
+
+        sock.close()
+    except Exception as exc:
+        logger.debug(f"SSDP discovery failed: {exc}")
+
+    return discovered
+
+
 async def _scan_host(ip: str, timeout: float, semaphore: asyncio.Semaphore) -> List[DiscoveredCamera]:
-    """Probe a single host for RTSP/HTTP/ONVIF endpoints."""
+    """Probe a single host for RTSP/HTTP/ONVIF/RTMP/SIP/CoAP endpoints."""
     results: List[DiscoveredCamera] = []
     async with semaphore:
         # Probe RTSP ports
@@ -326,6 +604,21 @@ async def _scan_host(ip: str, timeout: float, semaphore: asyncio.Semaphore) -> L
         # Probe ONVIF ports
         for port in _ONVIF_PORTS:
             res = await _probe_onvif(ip, port, timeout)
+            if res:
+                results.append(res)
+        # Probe RTMP ports
+        for port in _RTMP_PORTS:
+            res = await _probe_rtmp(ip, port, timeout)
+            if res:
+                results.append(res)
+        # Probe SIP ports
+        for port in _SIP_PORTS:
+            res = await _probe_sip(ip, port, timeout)
+            if res:
+                results.append(res)
+        # Probe CoAP ports
+        for port in _COAP_PORTS:
+            res = await _probe_coap(ip, port, timeout)
             if res:
                 results.append(res)
     return results
@@ -420,6 +713,9 @@ async def discover_cameras(
     subnets: Optional[Sequence[str]] = None,
     include_usb: bool = True,
     include_upnp: bool = True,
+    include_mqtt: bool = True,
+    include_webrtc: bool = True,
+    include_ssdp: bool = True,
     max_hosts: int = _DEFAULT_MAX_HOSTS,
     timeout_seconds: float = _DEFAULT_TIMEOUT,
     max_results: int = _DEFAULT_MAX_RESULTS,
@@ -432,6 +728,9 @@ async def discover_cameras(
                  small networks.
         include_usb: Whether to probe local USB indexes.
         include_upnp: Whether to use UPnP/mDNS discovery (zeroconf).
+        include_mqtt: Whether to scan for MQTT-based cameras.
+        include_webrtc: Whether to scan for WebRTC cameras.
+        include_ssdp: Whether to use SSDP/UPnP-AV discovery for NVR/DVR.
         max_hosts: Safety cap on how many hosts to sweep across all subnets.
         timeout_seconds: Socket timeout per host probe.
         max_results: Limit to avoid producing an overwhelming list.
@@ -445,12 +744,26 @@ async def discover_cameras(
         if len(results) >= max_results:
             return results[:max_results]
 
-    # UPnP/mDNS discovery runs in parallel with network scanning
-    upnp_task = None
-    if include_upnp:
-        upnp_task = asyncio.create_task(_discover_upnp_cameras(timeout_seconds * 2))
+    # Start all discovery methods in parallel
+    tasks = []
 
-    # Network scanning for RTSP/HTTP/ONVIF
+    # UPnP/mDNS discovery
+    if include_upnp:
+        tasks.append(asyncio.create_task(_discover_upnp_cameras(timeout_seconds * 2)))
+
+    # MQTT discovery
+    if include_mqtt:
+        tasks.append(asyncio.create_task(_discover_mqtt_cameras(timeout_seconds * 2)))
+
+    # WebRTC discovery
+    if include_webrtc:
+        tasks.append(asyncio.create_task(_discover_webrtc_cameras(timeout_seconds * 2)))
+
+    # SSDP/UPnP-AV discovery
+    if include_ssdp:
+        tasks.append(asyncio.create_task(_discover_ssdp_cameras(timeout_seconds * 2)))
+
+    # Network scanning for RTSP/HTTP/ONVIF/RTMP/SIP/CoAP
     if networks:
         try:
             net_results = await _scan_networks(
@@ -463,13 +776,13 @@ async def discover_cameras(
         except Exception as exc:
             logger.error("Network discovery failed: %s", exc)
 
-    # Collect UPnP results
-    if upnp_task:
+    # Collect all parallel discovery results
+    for task in tasks:
         try:
-            upnp_results = await upnp_task
-            results.extend(upnp_results)
+            task_results = await task
+            results.extend(task_results)
         except Exception as exc:
-            logger.error("UPnP discovery failed: %s", exc)
+            logger.error("Discovery task failed: %s", exc)
 
     # Deduplicate by source
     deduped: List[DiscoveredCamera] = []

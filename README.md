@@ -198,11 +198,23 @@ Source: http://192.168.1.100:8080/video
 - **HTTP scanning**: Expanded port coverage (80, 81, 82, 85, 8000, 8080, 8081, 8888, 9000, 10000)
 - **ONVIF/WS-Discovery**: Industry-standard IP camera protocol with device information retrieval
 - **UPnP/mDNS/Bonjour**: Zero-configuration networking for consumer cameras and IoT devices
+- **RTMP/RTMPS**: Real-Time Messaging Protocol for streaming cameras and NVRs (ports 1935, 1936, 8935)
+- **WebRTC**: Modern peer-to-peer streaming protocol detection via mDNS
+- **MQTT**: Home Assistant auto-discovery pattern for IoT cameras
+- **SIP/VoIP**: Session Initiation Protocol for IP cameras with VoIP capabilities (ports 5060, 5061)
+- **CoAP**: Constrained Application Protocol for IoT cameras (ports 5683, 5684)
+- **SSDP/UPnP-AV**: Enhanced discovery for NVR/DVR systems and media servers
 
 The enhanced discovery system can now find cameras from major manufacturers including:
 - Axis, Hikvision, Dahua, Reolink, Amcrest
 - Wyze, Ring, Arlo, Nest (local modes)
 - Generic ONVIF-compliant cameras
+- RTMP streaming servers and NVRs
+- WebRTC-enabled modern cameras
+- MQTT-based IoT cameras (Home Assistant compatible)
+- SIP/VoIP cameras
+- CoAP IoT devices
+- UPnP MediaServer devices and DVR/NVR systems
 - And many more...
 
 ---
