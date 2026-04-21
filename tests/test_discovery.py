@@ -11,11 +11,15 @@ from src.camera import discovery
 
 class TestDiscoveryHelpers:
     def test_parse_subnets_clamps_large_networks(self):
-        nets = discovery._parse_subnets(["10.0.0.0/16"], max_hosts=256)
+        nets = discovery._parse_subnets(["10.0.0.0/16"], max_hosts=256, allow_full_sweep=False)
         assert str(nets[0]) == "10.0.0.0/24"
 
+    def test_parse_subnets_allows_large_networks_with_full_sweep(self):
+        nets = discovery._parse_subnets(["10.0.0.0/16"], max_hosts=65536, allow_full_sweep=True)
+        assert str(nets[0]) == "10.0.0.0/16"
+
     def test_parse_subnets_skips_invalid(self):
-        nets = discovery._parse_subnets(["invalid-net"], max_hosts=256)
+        nets = discovery._parse_subnets(["invalid-net"], max_hosts=256, allow_full_sweep=False)
         assert nets == []
 
 
@@ -27,14 +31,19 @@ class TestDiscoveryAPI:
             subnets=None,
             include_usb=True,
             include_upnp=True,
+            include_mqtt=True,
+            include_webrtc=True,
+            include_ssdp=True,
             max_hosts=256,
             timeout_seconds=1.5,
             max_results=50,
+            allow_full_sweep=False,
         ) -> List[dict]:
             assert include_usb is False
             assert include_upnp is True
             assert subnets == ["192.168.1.0/24"]
             assert max_results == 2
+            assert allow_full_sweep is False
             return [
                 {
                     "source": "rtsp://192.168.1.10:554/",
@@ -56,3 +65,30 @@ class TestDiscoveryAPI:
         data = r.json()
         assert data[0]["source"] == "rtsp://192.168.1.10:554/"
         assert data[0]["type"] == "rtsp"
+
+    def test_discover_endpoint_with_full_sweep(self, monkeypatch, client):
+        """Ensure the API respects allow_full_sweep parameter."""
+
+        async def fake_discover(
+            subnets=None,
+            include_usb=True,
+            include_upnp=True,
+            include_mqtt=True,
+            include_webrtc=True,
+            include_ssdp=True,
+            max_hosts=256,
+            timeout_seconds=1.5,
+            max_results=50,
+            allow_full_sweep=False,
+        ) -> List[dict]:
+            assert allow_full_sweep is True
+            assert max_hosts == 2048
+            return []
+
+        monkeypatch.setattr("src.api.cameras.discovery.discover_cameras", fake_discover)
+
+        r = client.post(
+            "/api/cameras/discover",
+            json={"allow_full_sweep": True, "max_hosts": 2048},
+        )
+        assert r.status_code == 200
