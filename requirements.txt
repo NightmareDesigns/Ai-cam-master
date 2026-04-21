@@ -29,3 +29,4 @@ aiosmtplib==3.0.2
 # Utilities
 httpx==0.27.2
 anyio==4.7.0
+blinkpy==0.25.5

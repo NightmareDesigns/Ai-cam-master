@@ -17,16 +17,17 @@ import logging
 import socket
 from dataclasses import dataclass
 from typing import Iterable, List, Literal, Optional, Sequence, Set
+from urllib.parse import urlparse
 
 import cv2
 import psutil
 
 logger = logging.getLogger(__name__)
 
-DiscoveryType = Literal["usb", "rtsp", "http"]
+DiscoveryType = Literal["usb", "rtsp", "http", "zmodo", "blink"]
 
-_RTSP_PORTS = (554, 8554)
-_HTTP_PORTS = (80, 8000, 8080)
+_RTSP_PORTS = (554, 8554, 10554, 7447)
+_HTTP_PORTS = (80, 8000, 8080, 8888)
 _MAX_USB_INDEX = 5
 _DEFAULT_TIMEOUT = 0.75
 _DEFAULT_MAX_RESULTS = 25
@@ -128,7 +129,7 @@ def _discover_usb_cameras(max_index: int = _MAX_USB_INDEX) -> List[DiscoveredCam
     return found
 
 
-async def _probe_rtsp(ip: str, port: int, timeout: float) -> Optional[DiscoveredCamera]:
+async def _probe_rtsp(ip: str, port: int, timeout: float, path: str = "/") -> Optional[DiscoveredCamera]:
     """Attempt a minimal RTSP OPTIONS handshake to confirm responsiveness."""
     try:
         reader, writer = await asyncio.wait_for(
@@ -139,7 +140,8 @@ async def _probe_rtsp(ip: str, port: int, timeout: float) -> Optional[Discovered
         return None
 
     try:
-        request = f"OPTIONS rtsp://{ip}:{port}/ RTSP/1.0\r\nCSeq: 1\r\n\r\n".encode()
+        safe_path = path if path.startswith("/") else f"/{path}"
+        request = f"OPTIONS rtsp://{ip}:{port}{safe_path} RTSP/1.0\r\nCSeq: 1\r\n\r\n".encode()
         writer.write(request)
         await writer.drain()
         data = await asyncio.wait_for(reader.read(64), timeout=timeout)
@@ -239,6 +241,43 @@ async def _scan_networks(
             if len(found) >= max_results:
                 return found
     return found
+
+
+async def probe_rtsp_url(url: str, timeout: float) -> Optional[str]:
+    """Lightweight RTSP probe for an arbitrary RTSP/RTSPS URL.
+
+    Returns a short evidence string when the socket handshake/OPTIONS
+    succeeds, otherwise ``None``.
+    """
+    parsed = urlparse(url)
+    if not parsed.hostname:
+        return None
+    port = parsed.port or 554
+    path = parsed.path or "/"
+    # Avoid leaking credentials in the probe request line
+    request_url = f"rtsp://{parsed.hostname}:{port}{path}"
+    try:
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(parsed.hostname, port),
+            timeout=timeout,
+        )
+    except Exception:
+        return None
+
+    try:
+        request = f"OPTIONS {request_url} RTSP/1.0\r\nCSeq: 1\r\n\r\n".encode()
+        writer.write(request)
+        await writer.drain()
+        data = await asyncio.wait_for(reader.read(128), timeout=timeout)
+        if not data:
+            return "TCP handshake succeeded"
+        return data.split(b"\r\n", 1)[0].decode(errors="ignore") or "RTSP responded"
+    except Exception:
+        return None
+    finally:
+        writer.close()
+        with contextlib.suppress(Exception):
+            await writer.wait_closed()
 
 
 async def discover_cameras(
