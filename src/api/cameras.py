@@ -83,11 +83,14 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db)):
 
 @router.post("/discover", response_model=List[DiscoveredCamera])
 async def discover_cameras(payload: DiscoveryRequest):
-    """Scan local interfaces and USB devices for cameras."""
+    """Scan local interfaces and USB devices for cameras using multiple discovery protocols."""
     results = await discovery.discover_cameras(
         subnets=payload.subnets,
         include_usb=payload.include_usb,
         include_upnp=payload.include_upnp,
+        include_mqtt=payload.include_mqtt,
+        include_webrtc=payload.include_webrtc,
+        include_ssdp=payload.include_ssdp,
         max_hosts=payload.max_hosts,
         timeout_seconds=payload.timeout_seconds,
         max_results=payload.max_results,
