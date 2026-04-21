@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=AI-Cam
+Comment=AI-Powered Security Camera Monitoring
+Exec=ai-cam-gui
+Icon=ai-cam
+Terminal=false
+Categories=Video;Security;

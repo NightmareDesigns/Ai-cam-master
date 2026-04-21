@@ -32,7 +32,31 @@
 
 ## 🚀 Quick Start
 
-### Option A — Local Python
+### Option A — Desktop GUI (C++ All-in-One Executable)
+
+**Cross-platform native desktop application with embedded Python backend:**
+
+```bash
+# Build from source (requires Qt6 and CMake)
+cd cpp-gui
+./build.sh  # Linux/macOS
+# or
+build.bat   # Windows
+
+# Or download pre-built executables from GitHub Actions artifacts
+```
+
+The C++ GUI provides:
+- Native desktop application for Windows, macOS, and Linux
+- Dark-themed Qt6 interface
+- Live camera grid with WebSocket streaming
+- Auto-discovery and camera management
+- Real-time event monitoring
+- Embedded Python backend (no separate server needed)
+
+See [cpp-gui/README.md](cpp-gui/README.md) for build instructions.
+
+### Option B — Local Python
 
 ```bash
 # 1. Clone
@@ -55,7 +79,7 @@ python run.py
 
 Open **http://localhost:8000** in your browser.
 
-### Option B — Docker
+### Option C — Docker
 
 ```bash
 cp .env.example .env
@@ -63,6 +87,8 @@ docker-compose up -d
 ```
 
 Open **http://localhost:8000** in your browser.
+
+**Note:** The desktop GUI (Option A) is the recommended method for end-users as it provides a complete standalone application. Options B and C are for development or server deployments.
 
 ---
 
