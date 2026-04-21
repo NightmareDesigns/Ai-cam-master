@@ -45,27 +45,41 @@ async def lifespan(app: FastAPI):
         # Run auto-discovery on startup if enabled
         if settings.auto_discovery_enabled and settings.auto_discovery_on_startup:
             logger.info("Running auto-discovery on startup...")
+            # Use full sweep settings if enabled
+            max_hosts = (
+                settings.auto_discovery_full_sweep_max_hosts
+                if settings.auto_discovery_full_sweep
+                else settings.auto_discovery_max_hosts
+            )
             asyncio.create_task(
                 auto_discovery_service.run_discovery(
                     db=db,
                     subnets=settings.auto_discovery_subnets_list or None,
                     enable_brute_force=settings.auto_discovery_brute_force,
                     auto_add_cameras=settings.auto_discovery_auto_add,
-                    max_hosts=settings.auto_discovery_max_hosts,
+                    max_hosts=max_hosts,
                     timeout=settings.auto_discovery_timeout,
+                    allow_full_sweep=settings.auto_discovery_full_sweep,
                 )
             )
 
         # Start background auto-discovery if enabled with interval
         if settings.auto_discovery_enabled and settings.auto_discovery_interval_hours > 0:
+            # Use full sweep settings if enabled
+            max_hosts = (
+                settings.auto_discovery_full_sweep_max_hosts
+                if settings.auto_discovery_full_sweep
+                else settings.auto_discovery_max_hosts
+            )
             auto_discovery_service.start_background(
                 db=db,
                 subnets=settings.auto_discovery_subnets_list or None,
                 enable_brute_force=settings.auto_discovery_brute_force,
                 auto_add_cameras=settings.auto_discovery_auto_add,
-                max_hosts=settings.auto_discovery_max_hosts,
+                max_hosts=max_hosts,
                 timeout=settings.auto_discovery_timeout,
                 interval_hours=settings.auto_discovery_interval_hours,
+                allow_full_sweep=settings.auto_discovery_full_sweep,
             )
     finally:
         pass  # db kept open for event callbacks

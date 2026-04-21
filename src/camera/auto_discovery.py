@@ -34,6 +34,7 @@ class AutoDiscoveryService:
         auto_add_cameras: bool = True,
         max_hosts: int = 256,
         timeout: float = 2.0,
+        allow_full_sweep: bool = False,
     ) -> dict:
         """Run complete camera discovery with credential testing.
 
@@ -44,6 +45,7 @@ class AutoDiscoveryService:
             auto_add_cameras: Whether to automatically add discovered cameras to DB
             max_hosts: Maximum hosts to scan
             timeout: Timeout for each probe
+            allow_full_sweep: If True, scans full subnet ranges without /24 limitation
 
         Returns:
             Dictionary with discovery results and statistics
@@ -69,6 +71,7 @@ class AutoDiscoveryService:
                 max_hosts=max_hosts,
                 timeout_seconds=timeout,
                 max_results=100,
+                allow_full_sweep=allow_full_sweep,
             )
             stats["discovered"] = len(discovered)
             logger.info("Discovered %d potential cameras", len(discovered))
@@ -194,6 +197,7 @@ class AutoDiscoveryService:
         max_hosts: int = 256,
         timeout: float = 2.0,
         interval_hours: int = 24,
+        allow_full_sweep: bool = False,
     ):
         """Run discovery service in background with periodic re-scans.
 
@@ -205,6 +209,7 @@ class AutoDiscoveryService:
             max_hosts: Maximum hosts to scan
             timeout: Timeout for each probe
             interval_hours: Hours between re-scans
+            allow_full_sweep: If True, scans full subnet ranges without /24 limitation
         """
         self._running = True
         while self._running:
@@ -216,6 +221,7 @@ class AutoDiscoveryService:
                     auto_add_cameras=auto_add_cameras,
                     max_hosts=max_hosts,
                     timeout=timeout,
+                    allow_full_sweep=allow_full_sweep,
                 )
             except Exception as exc:
                 logger.error("Background discovery error: %s", exc)
@@ -232,6 +238,7 @@ class AutoDiscoveryService:
         max_hosts: int = 256,
         timeout: float = 2.0,
         interval_hours: int = 24,
+        allow_full_sweep: bool = False,
     ):
         """Start background discovery task.
 
@@ -243,6 +250,7 @@ class AutoDiscoveryService:
             max_hosts: Maximum hosts to scan
             timeout: Timeout for each probe
             interval_hours: Hours between re-scans
+            allow_full_sweep: If True, scans full subnet ranges without /24 limitation
         """
         if self._task is None or self._task.done():
             self._task = asyncio.create_task(
@@ -254,6 +262,7 @@ class AutoDiscoveryService:
                     max_hosts=max_hosts,
                     timeout=timeout,
                     interval_hours=interval_hours,
+                    allow_full_sweep=allow_full_sweep,
                 )
             )
             logger.info("Started background auto-discovery service")

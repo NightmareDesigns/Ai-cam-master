@@ -120,10 +120,12 @@ All settings are controlled via environment variables or a `.env` file:
 | `AUTO_DISCOVERY_ON_STARTUP` | `true` | Run discovery automatically when the application starts |
 | `AUTO_DISCOVERY_BRUTE_FORCE` | `true` | Test common default credentials on discovered cameras |
 | `AUTO_DISCOVERY_AUTO_ADD` | `true` | Automatically add discovered cameras to the database |
-| `AUTO_DISCOVERY_MAX_HOSTS` | `256` | Maximum number of hosts to scan |
+| `AUTO_DISCOVERY_MAX_HOSTS` | `256` | Maximum number of hosts to scan (normal mode) |
 | `AUTO_DISCOVERY_TIMEOUT` | `2.0` | Timeout in seconds for each camera probe |
 | `AUTO_DISCOVERY_INTERVAL_HOURS` | `24` | Hours between automatic re-scans (0 = no re-scan) |
 | `AUTO_DISCOVERY_SUBNETS` | — | Comma-separated subnets (e.g., `192.168.1.0/24`), leave empty to auto-detect |
+| `AUTO_DISCOVERY_FULL_SWEEP` | `false` | Enable full IP sweep mode (scans larger networks without /24 limitation) |
+| `AUTO_DISCOVERY_FULL_SWEEP_MAX_HOSTS` | `65536` | Maximum number of hosts to scan in full sweep mode |
 
 ---
 
@@ -205,7 +207,9 @@ Source: http://192.168.1.100:8080/video
 - **Automatic on startup**: By default, AI-Cam automatically scans your network when it starts and finds cameras
 - **Credential brute-forcing**: Tests 50+ common default credentials (admin/admin, root/root, etc.) on discovered cameras
 - **Auto-add cameras**: Cameras with valid credentials are automatically added to your dashboard
-- In the **Cameras** page, click **Auto-discover** to manually scan local subnets and find IP cameras
+- **Full IP sweep mode**: Enable `AUTO_DISCOVERY_FULL_SWEEP=true` to scan larger network ranges without the /24 subnet limitation (useful for scanning entire /16 or larger networks)
+- **On-demand discovery**: In the **Cameras** page, click **Auto-discover** to manually scan local subnets and find IP cameras
+- **API endpoint**: Use `POST /api/cameras/discover` with `allow_full_sweep: true` to trigger a full IP sweep programmatically
 - Provide optional subnets (e.g. `192.168.1.0/24`) or leave blank to scan active interfaces
 - Results can be added directly or used as a starting point for manual configuration
 

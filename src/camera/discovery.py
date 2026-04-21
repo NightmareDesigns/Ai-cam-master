@@ -70,14 +70,14 @@ class DiscoveredCamera:
     evidence: Optional[str] = None
 
 
-def _network_from_addr(addr: str, netmask: str, max_hosts: int) -> Optional[ipaddress.IPv4Network]:
+def _network_from_addr(addr: str, netmask: str, max_hosts: int, allow_full_sweep: bool = False) -> Optional[ipaddress.IPv4Network]:
     """Normalize an interface address + netmask into a bounded network."""
     try:
         net = ipaddress.IPv4Network(f"{addr}/{netmask}", strict=False)
     except Exception:
         return None
-    # Avoid sweeping huge ranges; clamp anything larger than max_hosts to /24.
-    if net.num_addresses > max_hosts:
+    # Avoid sweeping huge ranges unless full sweep mode is enabled
+    if not allow_full_sweep and net.num_addresses > max_hosts:
         try:
             net = ipaddress.IPv4Network(f"{net.network_address}/24", strict=False)
         except Exception:
@@ -85,7 +85,7 @@ def _network_from_addr(addr: str, netmask: str, max_hosts: int) -> Optional[ipad
     return net
 
 
-def _local_subnets(max_hosts: int) -> List[ipaddress.IPv4Network]:
+def _local_subnets(max_hosts: int, allow_full_sweep: bool = False) -> List[ipaddress.IPv4Network]:
     """Return small IPv4 networks for all non-loopback interfaces."""
     networks: List[ipaddress.IPv4Network] = []
     for _, addrs in psutil.net_if_addrs().items():
@@ -94,7 +94,7 @@ def _local_subnets(max_hosts: int) -> List[ipaddress.IPv4Network]:
                 continue
             if not addr.address or addr.address.startswith("127."):
                 continue
-            net = _network_from_addr(addr.address, addr.netmask or "255.255.255.0", max_hosts)
+            net = _network_from_addr(addr.address, addr.netmask or "255.255.255.0", max_hosts, allow_full_sweep)
             if net:
                 networks.append(net)
     # Deduplicate while preserving order
@@ -108,10 +108,10 @@ def _local_subnets(max_hosts: int) -> List[ipaddress.IPv4Network]:
     return uniq
 
 
-def _parse_subnets(subnets: Optional[Sequence[str]], max_hosts: int) -> List[ipaddress.IPv4Network]:
+def _parse_subnets(subnets: Optional[Sequence[str]], max_hosts: int, allow_full_sweep: bool = False) -> List[ipaddress.IPv4Network]:
     """Parse user-supplied subnet strings, applying the same bounds."""
     if not subnets:
-        return _local_subnets(max_hosts)
+        return _local_subnets(max_hosts, allow_full_sweep)
     parsed: List[ipaddress.IPv4Network] = []
     for raw in subnets:
         raw = raw.strip()
@@ -122,7 +122,7 @@ def _parse_subnets(subnets: Optional[Sequence[str]], max_hosts: int) -> List[ipa
         except Exception:
             logger.warning("Skipping invalid subnet: %s", raw)
             continue
-        if net.num_addresses > max_hosts:
+        if not allow_full_sweep and net.num_addresses > max_hosts:
             logger.info("Subnet %s too large, clamping to /24 for discovery safety", raw)
             net = ipaddress.IPv4Network(f"{net.network_address}/24", strict=False)
         parsed.append(net)
@@ -727,6 +727,7 @@ async def discover_cameras(
     max_hosts: int = _DEFAULT_MAX_HOSTS,
     timeout_seconds: float = _DEFAULT_TIMEOUT,
     max_results: int = _DEFAULT_MAX_RESULTS,
+    allow_full_sweep: bool = False,
 ) -> List[DiscoveredCamera]:
     """Discover cameras on the local machine and LAN.
 
@@ -742,8 +743,9 @@ async def discover_cameras(
         max_hosts: Safety cap on how many hosts to sweep across all subnets.
         timeout_seconds: Socket timeout per host probe.
         max_results: Limit to avoid producing an overwhelming list.
+        allow_full_sweep: If True, scans full subnet ranges without /24 limitation.
     """
-    networks = _parse_subnets(subnets, max_hosts)
+    networks = _parse_subnets(subnets, max_hosts, allow_full_sweep)
     results: List[DiscoveredCamera] = []
 
     # USB first, since it is fast and local

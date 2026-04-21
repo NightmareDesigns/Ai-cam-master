@@ -94,6 +94,7 @@ async def discover_cameras(payload: DiscoveryRequest):
         max_hosts=payload.max_hosts,
         timeout_seconds=payload.timeout_seconds,
         max_results=payload.max_results,
+        allow_full_sweep=payload.allow_full_sweep,
     )
     return results
 

@@ -37,6 +37,9 @@ class DiscoveryRequest(BaseModel):
     max_results: conint(ge=1, le=200) = Field(
         default=50, description="Limit how many discoveries are returned."
     )
+    allow_full_sweep: bool = Field(
+        default=False, description="If True, scans full subnet ranges without /24 limitation (may take longer)."
+    )
 
 
 class DiscoveredCamera(BaseModel):
