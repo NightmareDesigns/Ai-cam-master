@@ -1,8 +1,8 @@
 /* ── Shared vendor login helpers (Zmodo + Blink + Geeni) ─────────────── */
 
 function initVendorLogins(config = {}) {
-  const busy = { zmodo: false, blink: false, geeni: false, geeniLight: false, eesee: false };
-  const { zmodo = {}, blink = {}, geeni = {}, eesee = {}, onResults, onError, onSuccess, onStatus } = config;
+  const busy = { zmodo: false, zmodoCloud: false, blink: false, geeni: false, geeniLight: false, eesee: false };
+  const { zmodo = {}, zmodoCloud = {}, blink = {}, geeni = {}, eesee = {}, onResults, onError, onSuccess, onStatus } = config;
   const geeniCam = geeni.camera || {};
   const geeniLight = geeni.light || {};
 
@@ -16,6 +16,7 @@ function initVendorLogins(config = {}) {
   const setStatus = (vendor, text) => {
     let statusEl = null;
     if (vendor === 'zmodo') statusEl = getEl(zmodo.status);
+    else if (vendor === 'zmodoCloud') statusEl = getEl(zmodoCloud.status);
     else if (vendor === 'blink') statusEl = getEl(blink.status);
     else if (vendor === 'geeni') statusEl = getEl(geeniCam.status);
     else if (vendor === 'geeniLight') statusEl = getEl(geeniLight.status);
@@ -68,6 +69,42 @@ function initVendorLogins(config = {}) {
       else notify('Zmodo login failed: ' + e.message, 'error');
     } finally {
       busy.zmodo = false;
+    }
+  }
+
+  async function loginZmodoCloud() {
+    if (busy.zmodoCloud) return;
+    const email = getVal(zmodoCloud.email);
+    const password = getEl(zmodoCloud.pass)?.value ?? '';
+    const quality = getVal(zmodoCloud.quality) || 'hd';
+
+    if (!email || !password) {
+      notify('Zmodo cloud email and password are required.', 'error');
+      return;
+    }
+
+    busy.zmodoCloud = true;
+    setStatus('zmodoCloud', 'Logging in to Zmodo cloud…');
+    const body = {
+      email,
+      password,
+      quality,
+    };
+
+    try {
+      const res = await API.post('/api/cameras/zmodo/cloud/login', body);
+      if (onResults) onResults(res || []);
+      const label = res?.length
+        ? `Fetched ${res.length} Zmodo cloud camera${res.length === 1 ? '' : 's'}.`
+        : 'No Zmodo cameras found in account.';
+      setStatus('zmodoCloud', label);
+      if (onSuccess) onSuccess('zmodoCloud', label);
+    } catch (e) {
+      setStatus('zmodoCloud', 'Login failed. Check credentials and retry.');
+      if (onError) onError('zmodoCloud', e.message || 'Login failed');
+      else notify('Zmodo cloud login failed: ' + e.message, 'error');
+    } finally {
+      busy.zmodoCloud = false;
     }
   }
 
@@ -242,11 +279,13 @@ function initVendorLogins(config = {}) {
   }
 
   const zButton = getEl(zmodo.button);
+  const zcButton = getEl(zmodoCloud.button);
   const bButton = getEl(blink.button);
   const gButton = getEl(geeniCam.button);
   const glButton = getEl(geeniLight.button);
   const eButton = getEl(eesee.button);
   if (zButton) zButton.addEventListener('click', loginZmodo);
+  if (zcButton) zcButton.addEventListener('click', loginZmodoCloud);
   if (bButton) bButton.addEventListener('click', loginBlink);
   if (gButton) gButton.addEventListener('click', loginGeeniCamera);
   if (glButton) glButton.addEventListener('click', toggleGeeniLight);
@@ -254,10 +293,11 @@ function initVendorLogins(config = {}) {
 
   // Initialize statuses to Ready when present
   if (getEl(zmodo.status)) setStatus('zmodo', 'Ready.');
+  if (getEl(zmodoCloud.status)) setStatus('zmodoCloud', 'Ready.');
   if (getEl(blink.status)) setStatus('blink', 'Ready.');
   if (getEl(geeniCam.status)) setStatus('geeni', 'Ready.');
   if (getEl(geeniLight.status)) setStatus('geeniLight', 'Ready.');
   if (getEl(eesee.status)) setStatus('eesee', 'Ready.');
 
-  return { loginZmodo, loginBlink, loginGeeniCamera, loginEseeCam, toggleGeeniLight };
+  return { loginZmodo, loginZmodoCloud, loginBlink, loginGeeniCamera, loginEseeCam, toggleGeeniLight };
 }

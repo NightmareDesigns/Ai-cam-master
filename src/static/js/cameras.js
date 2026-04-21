@@ -246,6 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
       status: '#zmodo-status',
       button: '#btn-zmodo-login',
     },
+    zmodoCloud: {
+      email: '#zmodo-cloud-email',
+      pass: '#zmodo-cloud-pass',
+      quality: '#zmodo-cloud-quality',
+      status: '#zmodo-cloud-status',
+      button: '#btn-zmodo-cloud-login',
+    },
     blink: {
       user: '#blink-user',
       pass: '#blink-pass',
