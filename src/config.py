@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     auto_discovery_timeout: float = 2.0
     auto_discovery_interval_hours: int = 24
     auto_discovery_subnets: str = ""
+    auto_discovery_full_sweep: bool = False
+    auto_discovery_full_sweep_max_hosts: int = 65536
 
     @property
     def tracked_classes_list(self) -> List[str]:
