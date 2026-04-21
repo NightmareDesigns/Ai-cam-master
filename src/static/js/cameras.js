@@ -249,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     zmodoCloud: {
       email: '#zmodo-cloud-email',
       pass: '#zmodo-cloud-pass',
+      captcha: '#zmodo-cloud-captcha',
       quality: '#zmodo-cloud-quality',
       status: '#zmodo-cloud-status',
       button: '#btn-zmodo-cloud-login',

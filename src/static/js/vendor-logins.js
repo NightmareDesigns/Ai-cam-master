@@ -76,6 +76,7 @@ function initVendorLogins(config = {}) {
     if (busy.zmodoCloud) return;
     const email = getVal(zmodoCloud.email);
     const password = getEl(zmodoCloud.pass)?.value ?? '';
+    const captcha = getVal(zmodoCloud.captcha) || null;
     const quality = getVal(zmodoCloud.quality) || 'hd';
 
     if (!email || !password) {
@@ -90,6 +91,7 @@ function initVendorLogins(config = {}) {
       password,
       quality,
     };
+    if (captcha) body.captcha = captcha;
 
     try {
       const res = await API.post('/api/cameras/zmodo/cloud/login', body);

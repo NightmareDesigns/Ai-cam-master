@@ -27,10 +27,11 @@ class ZmodoCloudClient:
     REFRESH_ENDPOINT = "https://11-app-mop.meshare.com/user/refresh_login"
     STREAM_BASE = "https://flv.meshare.com/live"
 
-    def __init__(self, email: str, password: str, timeout: float = 10.0):
+    def __init__(self, email: str, password: str, timeout: float = 10.0, captcha: Optional[str] = None):
         self.email = email
         self.password = password
         self.timeout = timeout
+        self.captcha = captcha
         self.token: Optional[str] = None
         self.login_cert: Optional[str] = None
         self.mng_address: Optional[str] = None
@@ -57,6 +58,10 @@ class ZmodoCloudClient:
             "client_version": "7.0.2",
             "language": "en",
         }
+
+        # Add captcha if provided (for when web portal requires it)
+        if self.captcha:
+            payload["captcha"] = self.captcha
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -176,7 +181,7 @@ async def fetch_zmodo_cloud_cameras(payload: ZmodoCloudLoginRequest) -> List[Dis
     results: List[DiscoveredCamera] = []
 
     async with ZmodoCloudClient(
-        payload.email, payload.password, timeout=payload.timeout_seconds
+        payload.email, payload.password, timeout=payload.timeout_seconds, captcha=payload.captcha
     ) as client:
         # Authenticate
         try:
