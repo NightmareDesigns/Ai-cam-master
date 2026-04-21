@@ -15,7 +15,8 @@
 |---|---|
 | 📷 **Multi-camera support** | RTSP streams, USB webcams, HTTP MJPEG — add unlimited cameras |
 | 🔍 **Auto-discovery with credential brute-forcing** | Automatically finds cameras on your network and tests 50+ default credentials to identify valid logins — runs on startup |
-| 🔑 **Vendor logins** | Built-in helpers for Zmodo, EseeCam/EseeCloud, Geeni/Tuya, and Blink (with LAN discovery + RTSP or snapshot liveview) |
+| 🔑 **Vendor logins** | Built-in helpers for Zmodo (local + cloud), Blink (cloud), EseeCam/EseeCloud, and Geeni/Tuya (with LAN discovery + RTSP or snapshot liveview) |
+| ☁️ **Cloud camera access** | Access Zmodo cameras via user.zmodo.com cloud and Blink cameras via cloud liveview — no local network required |
 | 🤖 **AI Object Detection** | YOLOv8 real-time detection of persons, vehicles, animals, and 80+ COCO classes |
 | 🏃 **Motion Detection** | Background-subtraction motion detection (no AI needed) |
 | 📡 **Live Streaming** | MJPEG HTTP stream + WebSocket binary frames per camera |
@@ -238,6 +239,64 @@ The enhanced discovery system can now find cameras from major manufacturers incl
 - CoAP IoT devices
 - UPnP MediaServer devices and DVR/NVR systems
 - And many more...
+
+---
+
+## 🔑 Vendor Cloud Integrations
+
+AI-Cam includes built-in integrations for popular cloud camera services, allowing you to access your cameras without being on the same local network.
+
+### Zmodo Cloud (user.zmodo.com)
+
+Access your Zmodo cameras via the cloud service at user.zmodo.com:
+
+**Features:**
+- Login with your Zmodo account email and password
+- Fetches all cameras associated with your account
+- Supports HD (1080p) and SD (480p) streaming quality
+- FLV stream format over HTTPS
+- No local network access required
+
+**Usage:**
+1. Go to the **Cameras** page
+2. Click **Auto-discover**
+3. Scroll to the **Zmodo Cloud login** section
+4. Enter your Zmodo account credentials
+5. Select stream quality (HD or SD)
+6. Click **Login to Zmodo Cloud**
+7. Your cameras will be discovered and can be added to your dashboard
+
+**API endpoint:** `POST /api/cameras/zmodo/cloud/login`
+
+### Blink Cloud
+
+Access your Blink cameras via cloud liveview:
+
+**Features:**
+- Login with your Blink account credentials
+- Supports 2FA (two-factor authentication) codes
+- Supports recovery codes for backup authentication
+- Fetches liveview RTSP URLs for all cameras
+- Works with all Blink camera models that support liveview
+
+**Usage:**
+1. Go to the **Cameras** page
+2. Click **Auto-discover**
+3. Scroll to the **Blink login** section
+4. Enter your Blink account email and password
+5. If prompted for 2FA, enter your 6-digit code or recovery code
+6. Click **Login to Blink**
+7. Your cameras will be discovered and can be added to your dashboard
+
+**API endpoint:** `POST /api/cameras/blink/login`
+
+### Local Vendor Integrations
+
+For cameras on your local network, AI-Cam also supports:
+
+- **Zmodo (local)**: Direct RTSP or JPEG snapshot access to Zmodo cameras on your LAN
+- **EseeCam/EseeCloud**: RTSP builder with snapshot fallback for EseeCam devices
+- **Geeni/Tuya**: Local camera access and smart light control
 
 ---
 
