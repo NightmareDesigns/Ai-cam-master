@@ -2,6 +2,7 @@
 
 let cameras = [];
 let events  = [];
+let vendorStreams = [];
 
 async function loadDashboard() {
   try {
@@ -111,7 +112,93 @@ function renderEventFeed() {
   }).join('');
 }
 
+function renderVendorStreams() {
+  const container = document.getElementById('vendor-results');
+  if (!container) return;
+  if (!vendorStreams.length) {
+    container.innerHTML = '<div class="discovery-empty">Log in above to see vendor streams.</div>';
+    return;
+  }
+  container.innerHTML = vendorStreams.map((stream, idx) => `
+    <div class="discovery-card">
+      <div class="discovery-main">
+        <div class="discovery-label">${stream.label || 'Vendor stream'}</div>
+        <div class="discovery-source">${stream.source || '—'}</div>
+      </div>
+      <div class="discovery-actions">
+        <button class="btn btn-primary btn-sm" onclick="saveVendorCamera(${idx})">Save camera</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyVendorSource(${idx})">Copy URL</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function saveVendorCamera(idx) {
+  const stream = vendorStreams[idx];
+  if (!stream || !stream.source) {
+    toast('No stream URL to save.', 'error');
+    return;
+  }
+  const body = {
+    name: stream.label || 'Vendor stream',
+    source: stream.source,
+    location_name: stream.type || null,
+    detect_objects: true,
+    detect_motion: true,
+    record_on_event: true,
+    enabled: true,
+  };
+  try {
+    await API.post('/api/cameras/', body);
+    toast('Camera saved from vendor stream.', 'success');
+    loadDashboard();
+  } catch (e) {
+    toast('Unable to save camera: ' + e.message, 'error');
+  }
+}
+
+function copyVendorSource(idx) {
+  const stream = vendorStreams[idx];
+  if (!stream?.source) return;
+  navigator.clipboard?.writeText(stream.source)
+    .then(() => toast('Copied stream URL.', 'success'))
+    .catch(() => toast('Copy failed. Select and copy manually.', 'error'));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
   setInterval(loadDashboard, 10000); // refresh every 10s
+
+  initVendorLogins({
+    zmodo: {
+      host: '#zmodo-host-main',
+      user: '#zmodo-user-main',
+      pass: '#zmodo-pass-main',
+      port: '#zmodo-port-main',
+      channel: '#zmodo-channel-main',
+      transport: '#zmodo-transport-main',
+      status: '#zmodo-status-main',
+      button: '#btn-zmodo-login-main',
+    },
+    blink: {
+      user: '#blink-user-main',
+      pass: '#blink-pass-main',
+      otp: '#blink-otp-main',
+      status: '#blink-status-main',
+      button: '#btn-blink-login-main',
+    },
+    onResults: streams => {
+      vendorStreams = Array.isArray(streams) ? streams : [];
+      renderVendorStreams();
+    },
+    onError: (vendor, msg) => {
+      const name = vendor === 'zmodo' ? 'Zmodo' : 'Blink';
+      toast(`${name} login failed: ${msg}`, 'error');
+    },
+    onSuccess: (vendor, msg) => {
+      const name = vendor === 'zmodo' ? 'Zmodo' : 'Blink';
+      toast(`${name}: ${msg}`, 'success');
+    },
+  });
+  renderVendorStreams();
 });
