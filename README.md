@@ -14,6 +14,7 @@
 | Feature | Description |
 |---|---|
 | 📷 **Multi-camera support** | RTSP streams, USB webcams, HTTP MJPEG — add unlimited cameras |
+| 🔍 **Auto-discovery with credential brute-forcing** | Automatically finds cameras on your network and tests 50+ default credentials to identify valid logins — runs on startup |
 | 🔑 **Vendor logins** | Built-in helpers for Zmodo, EseeCam/EseeCloud, Geeni/Tuya, and Blink (with LAN discovery + RTSP or snapshot liveview) |
 | 🤖 **AI Object Detection** | YOLOv8 real-time detection of persons, vehicles, animals, and 80+ COCO classes |
 | 🏃 **Motion Detection** | Background-subtraction motion detection (no AI needed) |
@@ -111,6 +112,19 @@ All settings are controlled via environment variables or a `.env` file:
 | `SMTP_HOST` | — | SMTP server for email alerts |
 | `ALERT_EMAIL_TO` | — | Destination email address for alerts |
 
+### Auto-Discovery Settings
+
+| Variable | Default | Description |
+|---|---|---|
+| `AUTO_DISCOVERY_ENABLED` | `true` | Enable automatic camera discovery |
+| `AUTO_DISCOVERY_ON_STARTUP` | `true` | Run discovery automatically when the application starts |
+| `AUTO_DISCOVERY_BRUTE_FORCE` | `true` | Test common default credentials on discovered cameras |
+| `AUTO_DISCOVERY_AUTO_ADD` | `true` | Automatically add discovered cameras to the database |
+| `AUTO_DISCOVERY_MAX_HOSTS` | `256` | Maximum number of hosts to scan |
+| `AUTO_DISCOVERY_TIMEOUT` | `2.0` | Timeout in seconds for each camera probe |
+| `AUTO_DISCOVERY_INTERVAL_HOURS` | `24` | Hours between automatic re-scans (0 = no re-scan) |
+| `AUTO_DISCOVERY_SUBNETS` | — | Comma-separated subnets (e.g., `192.168.1.0/24`), leave empty to auto-detect |
+
 ---
 
 ## 📡 API Reference
@@ -188,12 +202,16 @@ Source: http://192.168.1.100:8080/video
 ```
 
 ### Auto-discover (LAN + USB)
-- In the **Cameras** page, click **Auto-discover** to scan local subnets and find IP cameras automatically.
-- Provide optional subnets (e.g. `192.168.1.0/24`) or leave blank to scan active interfaces.
-- Results can be added directly or used as a starting point for manual configuration.
+- **Automatic on startup**: By default, AI-Cam automatically scans your network when it starts and finds cameras
+- **Credential brute-forcing**: Tests 50+ common default credentials (admin/admin, root/root, etc.) on discovered cameras
+- **Auto-add cameras**: Cameras with valid credentials are automatically added to your dashboard
+- In the **Cameras** page, click **Auto-discover** to manually scan local subnets and find IP cameras
+- Provide optional subnets (e.g. `192.168.1.0/24`) or leave blank to scan active interfaces
+- Results can be added directly or used as a starting point for manual configuration
 
 **Discovery methods:**
 - **USB webcams**: Probes local USB indexes (0-5)
+- **Credential brute-forcing**: Automatically tests 50+ common default credentials on discovered cameras
 - **RTSP scanning**: Expanded port coverage (554, 8554, 10554, 7447, 88, 5000, 37777, 34567, 9000)
 - **HTTP scanning**: Expanded port coverage (80, 81, 82, 85, 8000, 8080, 8081, 8888, 9000, 10000)
 - **ONVIF/WS-Discovery**: Industry-standard IP camera protocol with device information retrieval
