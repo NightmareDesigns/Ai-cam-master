@@ -40,7 +40,7 @@ class ZmodoLoginRequest(BaseModel):
 
 
 class ZmodoCloudLoginRequest(BaseModel):
-    email: str = Field(..., description="Zmodo account email (for user.zmodo.com login).")
+    email: str = Field(..., description="Zmodo account email or phone number (for user.zmodo.com login).")
     password: str = Field(..., description="Zmodo account password.")
     captcha: Optional[str] = Field(
         default=None, description="Captcha code if required by user.zmodo.com."

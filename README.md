@@ -251,7 +251,7 @@ AI-Cam includes built-in integrations for popular cloud camera services, allowin
 Access your Zmodo cameras via the cloud service at user.zmodo.com:
 
 **Features:**
-- Login with your Zmodo account email and password
+- Login with your Zmodo account email or phone number and password
 - Fetches all cameras associated with your account
 - Supports HD (1080p) and SD (480p) streaming quality
 - FLV stream format over HTTPS
@@ -261,7 +261,7 @@ Access your Zmodo cameras via the cloud service at user.zmodo.com:
 1. Go to the **Cameras** page
 2. Click **Auto-discover**
 3. Scroll to the **Zmodo Cloud login** section
-4. Enter your Zmodo account credentials
+4. Enter your Zmodo account credentials (email or phone number)
 5. Select stream quality (HD or SD)
 6. Click **Login to Zmodo Cloud**
 7. Your cameras will be discovered and can be added to your dashboard
