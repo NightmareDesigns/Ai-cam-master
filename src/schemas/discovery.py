@@ -18,6 +18,15 @@ class DiscoveryRequest(BaseModel):
     include_upnp: bool = Field(
         default=True, description="Use UPnP/mDNS/Bonjour discovery for network cameras."
     )
+    include_mqtt: bool = Field(
+        default=True, description="Scan for MQTT-based cameras (Home Assistant pattern)."
+    )
+    include_webrtc: bool = Field(
+        default=True, description="Scan for WebRTC-enabled cameras via mDNS."
+    )
+    include_ssdp: bool = Field(
+        default=True, description="Use SSDP/UPnP-AV discovery for NVR/DVR systems."
+    )
     max_hosts: conint(ge=1, le=2048) = Field(
         default=256,
         description="Safety cap for how many hosts to sweep across all subnets.",
@@ -33,7 +42,7 @@ class DiscoveryRequest(BaseModel):
 class DiscoveredCamera(BaseModel):
     source: str
     label: str
-    type: Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni", "eeseecam", "onvif", "upnp"]
+    type: Literal["usb", "rtsp", "http", "zmodo", "blink", "geeni", "eeseecam", "onvif", "upnp", "rtmp", "webrtc", "mqtt", "sip", "coap", "ssdp"]
     ip: Optional[str] = None
     port: Optional[int] = None
     evidence: Optional[str] = None

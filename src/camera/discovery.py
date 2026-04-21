@@ -287,12 +287,20 @@ async def _discover_upnp_cameras(timeout: float) -> List[DiscoveredCamera]:
         aiozc = AsyncZeroconf()
         zc = await aiozc.zeroconf
 
-        # Search for common camera service types
+        # Search for common camera service types and related services
         service_types = [
             "_rtsp._tcp.local.",
             "_axis-video._tcp.local.",
             "_onvif._tcp.local.",
             "_http._tcp.local.",
+            "_airplay._tcp.local.",          # Some cameras support AirPlay
+            "_raop._tcp.local.",             # Remote Audio Output Protocol (related to AirPlay)
+            "_dacp._tcp.local.",             # Digital Audio Control Protocol
+            "_ipp._tcp.local.",              # Internet Printing Protocol (some camera printers)
+            "_scanner._tcp.local.",          # Scanner services
+            "_camera._tcp.local.",           # Generic camera service
+            "_nvr._tcp.local.",              # Network Video Recorder
+            "_dvr._tcp.local.",              # Digital Video Recorder
         ]
 
         browsers = []
