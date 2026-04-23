@@ -47,12 +47,6 @@ set(HEADERS
     include/SettingsDialog.h
 )
 
-set(UI_FILES
-    ui/mainwindow.ui
-    ui/cameradialog.ui
-    ui/settingsdialog.ui
-)
-
 # Resources
 set(RESOURCES
     resources/resources.qrc
@@ -68,7 +62,6 @@ include_directories(
 add_executable(ai-cam-gui WIN32 MACOSX_BUNDLE
     ${SOURCES}
     ${HEADERS}
-    ${UI_FILES}
     ${RESOURCES}
 )
 
