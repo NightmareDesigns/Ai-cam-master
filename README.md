@@ -66,6 +66,36 @@ Open **http://localhost:8000** in your browser.
 
 ---
 
+## 🧱 Build a Standalone Executable (EXE)
+
+PyInstaller builds executables for the **current OS** only (build on Windows to get a `.exe`).
+
+### Windows (produces `AI-Cam.exe`)
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+pip install -r requirements-build.txt
+pyinstaller aicam.spec
+```
+
+Output: `dist/AI-Cam/AI-Cam.exe`
+
+### Linux (produces a Linux binary)
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-build.txt
+pyinstaller aicam.spec
+```
+
+Output: `dist/AI-Cam/AI-Cam`
+
+---
+
 ## 🖼️ Dashboard Overview
 
 ```
